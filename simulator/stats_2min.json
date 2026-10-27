@@ -1,0 +1,39 @@
+{
+  "total_sent": 295,
+  "status_202": 295,
+  "status_400": 0,
+  "errors": 0,
+  "anomalies_injected": 10,
+  "per_sensor": {
+    "sensor-001": {
+      "sent": 59,
+      "status_202": 59,
+      "status_400": 0,
+      "errors": 0
+    },
+    "sensor-002": {
+      "sent": 59,
+      "status_202": 59,
+      "status_400": 0,
+      "errors": 0
+    },
+    "sensor-003": {
+      "sent": 59,
+      "status_202": 59,
+      "status_400": 0,
+      "errors": 0
+    },
+    "sensor-004": {
+      "sent": 59,
+      "status_202": 59,
+      "status_400": 0,
+      "errors": 0
+    },
+    "sensor-005": {
+      "sent": 59,
+      "status_202": 59,
+      "status_400": 0,
+      "errors": 0
+    }
+  }
+}

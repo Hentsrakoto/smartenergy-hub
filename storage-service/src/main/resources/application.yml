@@ -1,0 +1,39 @@
+server:
+  port: ${STORAGE_SERVER_PORT:8083}
+
+spring:
+  application:
+    name: storage-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      timeout: 3000ms
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/smartenergy}
+      auto-index-creation: true
+  cassandra:
+    keyspace-name: ${CASSANDRA_KEYSPACE:smartenergy}
+    contact-points: ${CASSANDRA_HOST:localhost}
+    port: ${CASSANDRA_PORT:9042}
+    local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}
+    # Le schéma est géré explicitement par scripts/init_cassandra.cql (idempotent).
+    # Spring ne doit donc jamais créer, modifier ou supprimer des tables.
+    schema-action: none
+    request:
+      timeout: 5s
+    connection:
+      connect-timeout: 5s
+      init-query-timeout: 5s
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+smartenergy:
+  stream:
+    name: ${REDIS_STREAM_NAME:energy-measurements}
+    group: ${REDIS_STREAM_GROUP:storage-group}
+    consumer-prefix: ${REDIS_CONSUMER_PREFIX:storage-consumer}
+    poll-timeout-ms: 1000
+    batch-size: 10
+    recovery-interval-ms: 10000

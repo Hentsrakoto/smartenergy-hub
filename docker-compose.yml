@@ -1,0 +1,65 @@
+# ==============================================================================
+# Docker Compose — Infrastructure Dépendances SmartEnergy Hub
+#
+# RÈGLES D'EXÉCUTION DU PROJET :
+# 1. Spring Boot (Collector, Storage) et Streamlit tournent SUR L'HÔTE (hors Docker).
+# 2. Apache Cassandra tourne dans le conteneur autonome 'smartenergy-cassandra'
+#    du contexte Docker 'default' (port hôte 127.0.0.1:9042). L'ancien conteneur
+#    'cassandra' et son volume sont conservés, mais ne sont pas utilisés par le projet.
+#    Cassandra n'est pas redéclarée ici pour éviter une seconde instance.
+# 3. Ce fichier compose gère exclusivement les dépendances conteneurisées supplémentaires :
+#    - Redis Streams (buffer de transport d'événements)
+#    - MongoDB (métadonnées, alertes, synthèses quotidiennes)
+# ==============================================================================
+
+services:
+  smartenergy-redis:
+    image: redis:7.4-alpine
+    container_name: smartenergy-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      # Port hôte 6380 pour ne pas entrer en conflit avec tsidika-redis (port 6379)
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - smartenergy_redis_data:/data
+    networks:
+      - smartenergy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  smartenergy-mongo:
+    image: mongo:7.0-jammy
+    container_name: smartenergy-mongo
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-smartenergy}
+    volumes:
+      - smartenergy_mongo_data:/data/db
+    networks:
+      - smartenergy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+
+volumes:
+  smartenergy_redis_data:
+    name: smartenergy_redis_data
+  smartenergy_mongo_data:
+    name: smartenergy_mongo_data
+
+networks:
+  smartenergy-network:
+    name: smartenergy-network
+    driver: bridge

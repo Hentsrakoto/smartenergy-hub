@@ -1,0 +1,51 @@
+{
+  "target_url": "http://localhost:8081/api/measurements",
+  "interval_seconds": 2.0,
+  "sensors": [
+    {
+      "sensor_id": "sensor-001",
+      "description": "Bâtiment Tertiaire - Climatisation & CVC",
+      "p_base": 25.0,
+      "amplitude": 8.0,
+      "period": 60.0,
+      "voltage_nominal": 230.0,
+      "temp_base": 22.0
+    },
+    {
+      "sensor_id": "sensor-002",
+      "description": "Atelier Industriel - Ligne d'assemblage",
+      "p_base": 55.0,
+      "amplitude": 15.0,
+      "period": 45.0,
+      "voltage_nominal": 231.0,
+      "temp_base": 30.0
+    },
+    {
+      "sensor_id": "sensor-003",
+      "description": "Bâtiment Bureaux - Éclairage et Postes informatiques",
+      "p_base": 12.0,
+      "amplitude": 3.5,
+      "period": 90.0,
+      "voltage_nominal": 230.5,
+      "temp_base": 21.0
+    },
+    {
+      "sensor_id": "sensor-004",
+      "description": "Datacenter - Serveurs et Climatisation de précision",
+      "p_base": 42.0,
+      "amplitude": 4.0,
+      "period": 30.0,
+      "voltage_nominal": 229.5,
+      "temp_base": 25.0
+    },
+    {
+      "sensor_id": "sensor-005",
+      "description": "Parking - Bornes de recharge pour véhicules électriques",
+      "p_base": 22.0,
+      "amplitude": 11.0,
+      "period": 60.0,
+      "voltage_nominal": 230.0,
+      "temp_base": 19.5
+    }
+  ]
+}

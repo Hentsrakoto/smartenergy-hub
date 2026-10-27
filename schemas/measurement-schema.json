@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://smartenergy-hub.internal/schemas/measurement-schema.json",
+  "title": "EnergyMeasurementRequest",
+  "description": "Contrat de validation d'une télémesure énergétique envoyée par un capteur IoT.",
+  "type": "object",
+  "properties": {
+    "sensorId": {
+      "description": "Identifiant unique du capteur (3 à 50 caractères alphanumériques, tiret ou souligné)",
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{3,50}$",
+      "examples": ["sensor-001", "sensor_building_A"]
+    },
+    "timestamp": {
+      "description": "Horodatage de la mesure au format ISO-8601 UTC (ex: 2026-10-20T14:30:00Z)",
+      "type": "string",
+      "format": "date-time",
+      "examples": ["2026-10-20T14:30:00Z"]
+    },
+    "powerKw": {
+      "description": "Puissance active instantanée en kilowatts (kW), positive ou nulle",
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 5000.0,
+      "examples": [4.25, 120.0]
+    },
+    "voltage": {
+      "description": "Tension efficace mesurée en volts (V), plage physique plausible [150V - 300V]",
+      "type": "number",
+      "minimum": 150.0,
+      "maximum": 300.0,
+      "examples": [230.2, 228.5]
+    },
+    "temperature": {
+      "description": "Température ambiante ou de l'équipement en degrés Celsius (°C), optionnelle [-40°C à 125°C]",
+      "type": "number",
+      "minimum": -40.0,
+      "maximum": 125.0,
+      "examples": [22.4, 45.1]
+    }
+  },
+  "required": [
+    "sensorId",
+    "timestamp",
+    "powerKw",
+    "voltage"
+  ],
+  "additionalProperties": false
+}

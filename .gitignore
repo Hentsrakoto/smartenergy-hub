@@ -1,0 +1,55 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Java & Maven
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Gradle
+.gradle/
+build/
+
+# IDE & Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# Python & Streamlit
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.streamlit/secrets.toml
+
+# Node & Tooling
+node_modules/
+.opencode/node_modules/
+
+# Downloaded third-party agent skills (the project-specific rules skill is kept)
+.agent/skills/superpowers-main/
+.agent/skills/ui-ux-pro-max-skill-main/
+.opencode/skills/superpowers-main/
+.opencode/skills/ui-ux-pro-max-skill-main/
+
+# Logs & Temporary
+*.log
+logs/
+scratch/
+.DS_Store
+Thumbs.db
