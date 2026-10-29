@@ -11,6 +11,27 @@
 # ==============================================================================
 
 services:
+  smartenergy-simulator:
+    profiles: ["simulation"]
+    build:
+      context: ./simulator
+    image: smartenergy-simulator:local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - smartenergy-network
+    environment:
+      PYTHONUNBUFFERED: "1"
+      NO_PROXY: "host.docker.internal,localhost,127.0.0.1"
+    command:
+      - "--config"
+      - "config.json"
+      - "--url"
+      - "${SIMULATOR_TARGET_URL:-http://host.docker.internal:8081/api/measurements}"
+      - "--duration"
+      - "${SIMULATOR_DURATION_SECONDS:-120}"
+    restart: "no"
+
   smartenergy-redis:
     image: redis:7.4-alpine
     container_name: smartenergy-redis

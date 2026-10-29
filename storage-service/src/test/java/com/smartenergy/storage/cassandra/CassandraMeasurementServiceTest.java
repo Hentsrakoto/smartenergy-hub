@@ -36,6 +36,14 @@ class CassandraMeasurementServiceTest {
     }
 
     @Test
+    void rejectsMoreThan31DaysBeforeQueryingCassandra() {
+        Instant from = Instant.parse("2026-10-01T00:00:00Z");
+        assertThatThrownBy(() -> service.findByRange("sensor-001", from, from.plusSeconds(32L * 86400)))
+                .isInstanceOf(IllegalArgumentException.class);
+        verifyNoInteractions(repository);
+    }
+
+    @Test
     @DisplayName("save() doit créer une entité avec la bonne clé de partition (sensor_id, day)")
     void shouldPersistWithCorrectPartitionKey() {
         Instant ts = Instant.parse("2026-10-21T14:30:00Z");

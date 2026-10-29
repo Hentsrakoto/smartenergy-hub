@@ -183,6 +183,15 @@ class DailySummaryServiceTest {
         verifyNoInteractions(sensorService, cassandraService, summaryRepository);
     }
 
+    @Test
+    void dailyEnergyStopsAtUtcMidnight() {
+        when(sensorService.findDocument("SENSOR-001")).thenReturn(sensor("SENSOR-001"));
+        Instant at = Instant.parse("2026-10-22T23:59:30Z");
+        when(cassandraService.findByDay("SENSOR-001", DAY)).thenReturn(List.of(
+                new MeasurementEntity("SENSOR-001", DAY, at, 6.0, 220, null)));
+        assertThat(service.getOrCompute("SENSOR-001", DAY, true).energyKwh()).isEqualTo(0.05);
+    }
+
     private SensorDocument sensor(String sensorId) {
         SensorDocument sensor = new SensorDocument();
         sensor.setSensorId(sensorId);

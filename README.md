@@ -105,7 +105,14 @@ cd storage-service && mvn spring-boot:run
 
 ### 4. Simulateur et Dashboard (étapes distinctes)
 
-Le simulateur dispose de `simulator/Dockerfile` ; son scénario n'est pas relancé dans cette reprise des bases. Le Dashboard Streamlit reste à implémenter : aucun fichier `dashboard/app.py` n'est présent. Lorsqu'il sera ajouté, il devra être lancé sur l'hôte.
+Le simulateur dispose d'un profil Compose `simulation`. Après démarrage des deux applications Spring Boot sur l'hôte :
+
+```bash
+docker compose --profile simulation build smartenergy-simulator
+docker compose --profile simulation up --no-deps --abort-on-container-exit --exit-code-from smartenergy-simulator smartenergy-simulator
+```
+
+Il s'exécute pendant 120 secondes et joint le Collector via `host.docker.internal:8081`. Voir [le guide Docker](docs/docker-databases.md) pour les réglages et les contrôles de persistance. Le Dashboard Streamlit reste à implémenter ; il devra être lancé sur l'hôte.
 
 ### 5. Vérifier la persistance Cassandra
 ```bash
@@ -129,6 +136,8 @@ docker --context default exec smartenergy-cassandra cqlsh -e \
 - [Checklist d'avancement](docs/progress.md)
 - [Architecture détaillée](docs/architecture.md)
 - [Installation Docker des bases](docs/docker-databases.md)
+- [Sécurité et profils local/demo](docs/security.md) — diagnostics désactivés par défaut ; profil demo local sans Swagger.
+- [Santé et métriques Actuator locales](docs/observability.md) — Collector `127.0.0.1:9081`, Storage `127.0.0.1:9083`, endpoints `/actuator/health` et `/actuator/metrics`.
 - [Reprise sur ce PC : bases, suites Java et scénario réel](compte_rendu/etape_8/reprise_nouveau_pc_bases.md)
 - [Reprise de l'étape 5](compte_rendu/etape_5/reprise-2026-10-26.md)
 - [API capteurs et résumés (étape 6)](docs/api.md)

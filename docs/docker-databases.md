@@ -93,7 +93,34 @@ docker compose stop smartenergy-redis smartenergy-mongo smartenergy-cassandra
 
 Ces commandes d'exploitation sont des instructions, pas des preuves d'exécution de la présente tâche. Ne pas supprimer de volume ou de conteneur. Ne jamais utiliser `down -v`, `docker volume rm`, une purge ou une instruction CQL `DROP` pour dépanner.
 
-## Résultats de vérification du 2026-10-27
+## Simulateur Docker — étape 10
+
+Le service `smartenergy-simulator` est facultatif, sous le profil `simulation`. Il n'est donc pas lancé par un simple `docker compose up -d`. Le Dockerfile Python 3.12 n'installe aucune bibliothèque supplémentaire et utilise l'UID non privilégié 10001 ; `.dockerignore` limite les fichiers envoyés à la construction. Le simulateur est une tâche finie, sans port publié ni healthcheck permanent et avec `restart: no`.
+
+Spring Boot reste sur l'hôte : démarrer Collector et Storage dans deux terminaux avec `mvn -o -q spring-boot:run` depuis leurs dossiers. Vérifier les bases avec `scripts/verify_databases.sh` avant de lancer les applications.
+
+```bash
+docker compose config --quiet
+docker compose --profile simulation build smartenergy-simulator
+docker compose --profile simulation up --no-deps --abort-on-container-exit --exit-code-from smartenergy-simulator smartenergy-simulator
+docker compose logs --tail=100 smartenergy-simulator
+```
+
+Le simulateur joint l'hôte avec `host.docker.internal`, résolu par `host-gateway` sur Linux. Le Collector doit écouter sur une interface joignable depuis le réseau Docker (configuration Spring par défaut). Un pare-feu local peut nécessiter d'autoriser le trafic de `smartenergy-network` vers le port Collector. Les bases entre conteneurs se joignent via leurs noms de service ; `localhost` désigne toujours le conteneur appelant.
+
+Durée et URL sont configurables dans `.env` : `SIMULATOR_DURATION_SECONDS=120` et `SIMULATOR_TARGET_URL=http://host.docker.internal:8081/api/measurements`. Adapter explicitement cette URL si le port Collector change. Pour un essai court :
+
+```bash
+SIMULATOR_DURATION_SECONDS=6 docker compose --profile simulation up --no-deps --abort-on-container-exit --exit-code-from smartenergy-simulator smartenergy-simulator
+```
+
+Le code de sortie du simulateur seul n'est pas une preuve d'ingestion : vérifier son bilan (succès 202, rejets et erreurs), le stream Redis et les lignes Cassandra. Les capteurs sans métadonnées sont stockés dans Cassandra ; créer leur configuration via l'API avant l'essai si l'on souhaite aussi des agrégats MongoDB.
+
+Les variables `.env` sont interpolées par Compose, mais pas automatiquement exportées aux applications Maven lancées sur l'hôte. Leur fournir les variables adaptées dans le terminal de chaque service en cas de ports personnalisés. Le schéma CQL utilise toujours `smartenergy`.
+
+Les healthchecks des bases ne remplacent pas les mécanismes de reprise applicatifs : le consumer conserve en PEL les événements en erreur et les rejoue après rétablissement ; l'initialisation Cassandra doit réussir avant le lancement de Storage. Voir les preuves des étapes 4 et 7. Ne pas utiliser `down -v` pour relancer une démonstration.
+
+## Historique des preuves de reprise
 
 Implémentation du script vérifiée : contrôle d'absence initial en échec, syntaxe et droit d'exécution réussis, six scénarios contrôlés vérifiant le succès et l'arrêt immédiat sur erreur. Docker Engine `29.9.0`, Compose `v5.0.2`, contexte `default`.
 

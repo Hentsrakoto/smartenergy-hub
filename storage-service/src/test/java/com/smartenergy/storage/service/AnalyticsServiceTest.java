@@ -74,6 +74,71 @@ class AnalyticsServiceTest {
         verifyNoInteractions(cassandra, sensors);
     }
 
+    @Test
+    void emptyHistoryReturnsZeroIndicatorsAndNoAnomalies() {
+        when(sensors.findDocument("sensor-001")).thenReturn(new SensorDocument());
+        when(cassandra.findByRange("sensor-001", FROM, TO)).thenReturn(List.of());
+        AnalyticsService service = new AnalyticsService(cassandra, sensors);
+        AnalyticsSummary summary = service.summarize("sensor-001", FROM, TO);
+        assertThat(summary.measurementCount()).isZero();
+        assertThat(summary.avgPowerKw()).isZero();
+        assertThat(summary.energyKwh()).isZero();
+        assertThat(service.findAnomalies("sensor-001", FROM, TO)).isEmpty();
+    }
+
+    @Test
+    void thresholdsAreInclusiveAndMissingTemperatureIsAccepted() {
+        SensorDocument sensor = new SensorDocument();
+        sensor.setMaxPowerKw(5);
+        sensor.setMinVoltage(210);
+        sensor.setMaxVoltage(240);
+        sensor.setMaxTemperature(30);
+        when(sensors.findDocument("sensor-001")).thenReturn(sensor);
+        when(cassandra.findByRange("sensor-001", FROM, TO)).thenReturn(List.of(
+                measurement(FROM, 5, 210, 30.0), measurement(TO, 5, 240, null)));
+        assertThat(new AnalyticsService(cassandra, sensors).findAnomalies("sensor-001", FROM, TO)).isEmpty();
+    }
+
+    @Test
+    void reportsAllReasonsButCountsEachAnomalousMeasurementOnce() {
+        SensorDocument sensor = new SensorDocument();
+        sensor.setMaxPowerKw(5);
+        sensor.setMinVoltage(210);
+        sensor.setMaxVoltage(240);
+        sensor.setMaxTemperature(30);
+        when(sensors.findDocument("sensor-001")).thenReturn(sensor);
+        when(cassandra.findByRange("sensor-001", FROM, TO)).thenReturn(List.of(
+                measurement(FROM, 6, 200, 31.0), measurement(TO, 1, 250, null)));
+        AnalyticsService service = new AnalyticsService(cassandra, sensors);
+        List<MeasurementAnomaly> anomalies = service.findAnomalies("sensor-001", FROM, TO);
+        assertThat(anomalies.get(0).reasons()).containsExactly("POWER_ABOVE_MAX", "VOLTAGE_BELOW_MIN", "TEMPERATURE_ABOVE_MAX");
+        assertThat(anomalies.get(1).reasons()).containsExactly("VOLTAGE_ABOVE_MAX");
+        assertThat(service.summarize("sensor-001", FROM, TO).anomalyCount()).isEqualTo(2);
+    }
+
+    @Test
+    void integratesIrregularIntervalsAndConfiguredLastInterval() {
+        SensorDocument sensor = new SensorDocument();
+        sensor.setSamplingIntervalSeconds(90);
+        Instant end = FROM.plusSeconds(180);
+        when(sensors.findDocument("sensor-001")).thenReturn(sensor);
+        when(cassandra.findByRange("sensor-001", FROM, end)).thenReturn(List.of(
+                measurement(FROM.plusSeconds(30), 4, 230, null), measurement(FROM, 2, 230, null)));
+        assertThat(new AnalyticsService(cassandra, sensors).summarize("sensor-001", FROM, end).energyKwh())
+                .isEqualTo(0.116667);
+    }
+
+    @Test
+    void longMissingIntervalIsCappedAt24Hours() {
+        SensorDocument sensor = new SensorDocument();
+        Instant end = FROM.plusSeconds(3 * 86400);
+        when(sensors.findDocument("sensor-001")).thenReturn(sensor);
+        when(cassandra.findByRange("sensor-001", FROM, end)).thenReturn(List.of(
+                measurement(FROM, 2, 230, null), measurement(end, 4, 230, null)));
+        assertThat(new AnalyticsService(cassandra, sensors).summarize("sensor-001", FROM, end).energyKwh())
+                .isEqualTo(48);
+    }
+
     private MeasurementEntity measurement(Instant at, double power, double voltage, Double temperature) {
         return new MeasurementEntity("sensor-001", LocalDate.of(2026, 10, 28), at,
                 power, voltage, temperature);

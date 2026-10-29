@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +40,7 @@ public class CassandraPersistenceService implements MeasurementPersistenceServic
 
     private final CassandraMeasurementService cassandraService;
     private final DailySummaryService dailySummaryService;
+    private final MeterRegistry metrics;
     private final AtomicLong persistedCount = new AtomicLong(0);
     private static final int LOCK_STRIPES = 64;
     private final Object[] dayLocks = new Object[LOCK_STRIPES];
@@ -47,9 +50,13 @@ public class CassandraPersistenceService implements MeasurementPersistenceServic
     private static final int MAX_RECENT = 50;
 
     public CassandraPersistenceService(CassandraMeasurementService cassandraService,
-                                       DailySummaryService dailySummaryService) {
+                                       DailySummaryService dailySummaryService, MeterRegistry metrics) {
         this.cassandraService = cassandraService;
         this.dailySummaryService = dailySummaryService;
+        this.metrics = metrics;
+        metrics.counter("smartenergy.storage.persistence.errors");
+        metrics.timer("smartenergy.storage.persistence", "outcome", "success");
+        metrics.timer("smartenergy.storage.persistence", "outcome", "error");
         for (int i = 0; i < dayLocks.length; i++) {
             dayLocks[i] = new Object();
         }
@@ -57,6 +64,20 @@ public class CassandraPersistenceService implements MeasurementPersistenceServic
 
     @Override
     public void persist(EnergyMeasurementEvent event) {
+        Timer.Sample sample = Timer.start(metrics);
+        String outcome = "success";
+        try {
+            persistMeasurement(event);
+        } catch (RuntimeException exception) {
+            outcome = "error";
+            metrics.counter("smartenergy.storage.persistence.errors").increment();
+            throw exception;
+        } finally {
+            sample.stop(metrics.timer("smartenergy.storage.persistence", "outcome", outcome));
+        }
+    }
+
+    private void persistMeasurement(EnergyMeasurementEvent event) {
         LocalDate day = event.timestamp().atZone(ZoneOffset.UTC).toLocalDate();
         int lockIndex = Math.floorMod(Objects.hash(event.sensorId(), day), LOCK_STRIPES);
         // Le listener et la reprise des messages en attente peuvent traiter le

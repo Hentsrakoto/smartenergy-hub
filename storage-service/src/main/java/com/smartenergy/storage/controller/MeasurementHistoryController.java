@@ -71,7 +71,7 @@ public class MeasurementHistoryController {
      * @param to       borne supérieure ISO-8601 UTC (ex: 2026-10-21T23:59:59Z)
      * @return liste des mesures dans l'intervalle, plus récent en premier par jour
      */
-    @Operation(summary = "Lire les mesures entre deux instants UTC inclus, ordre décroissant")
+    @Operation(summary = "Lire les mesures entre deux instants UTC inclus, ordre décroissant", description = "Période de 31 jours maximum ; plage excessive rejetée en HTTP 400 avant lecture Cassandra.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Mesures dans la plage", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MeasurementEntity.class)))),
         @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),

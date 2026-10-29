@@ -23,10 +23,10 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 | **Étape 6** | MongoDB (Métadonnées capteurs, agrégats, résumés quotidiens) | **Validé** | 2026-10-29 | Rapports MongoDB, lecture HTTP et document `reports` vérifiés ; tests passés et validation explicite de l'étudiant le 2026-10-29 |
 | **Étape 7** | Storage Service Spring Boot (Consommation Redis, Cassandra + Mongo) | **Validé** | 2026-10-28 | E2E, rejeu, panne Mongo et arrêt Storage vérifiés ; validation explicite de l'étudiant le 2026-10-28 |
 | **Étape 8** | API de consultation REST & Documentation OpenAPI / Swagger | **Validé** | 2026-10-29 | Latest, résumé, anomalies, HTTP réel et Swagger vérifiés ; tests OpenAPI passés ; validation explicite de l'étudiant le 2026-10-29, limites dans docs/api.md |
-| **Étape 9** | Analytics & Détection d'anomalies (Descriptif, seuils, IA) | `À faire` | - | Moyennes, kWh estimés, règles anomalies |
-| **Étape 10**| Conteneurisation Docker Compose & Persistance | **En cours** | - | Trois bases healthy sous Compose, initialiseur CQL et persistance après restart vérifiés le 2026-10-27 ; validation globale à venir |
-| **Étape 11**| Observabilité & Supervision (Spring Boot Actuator, métriques) | `À faire` | - | Health endpoints, métriques custom ingestion/stockage |
-| **Étape 12**| Sécurité & Durcissement (.env, validation entrées, profils) | `À faire` | - | Aucun secret dans git, ports sécurisés |
+| **Étape 9** | Analytics & Détection d'anomalies (Descriptif, seuils) | **Validé** | 2026-10-29 | 89 tests réussis, scénario E2E et correction énergie à minuit UTC vérifiés ; validation explicite de l'étudiant le 2026-10-29, détails docs/analytics.md |
+| **Étape 10**| Conteneurisation Docker Compose & Persistance | **Validé** | 2026-10-29 | Profil simulation et persistance vérifiés ; validation explicite de l'étudiant le 2026-10-29 |
+| **Étape 11**| Observabilité & Supervision (Spring Boot Actuator, métriques) | **Validé** | 2026-10-29 | Actuator et métriques vérifiés ; validation explicite de l'étudiant le 2026-10-29 |
+| **Étape 12**| Sécurité & Durcissement (.env, validation entrées, profils) | **Validé** | 2026-10-29 | Audit ciblé, profils et protections vérifiés ; Storage 93 tests, Collector 18 ; validation explicite de l'étudiant le 2026-10-29, limites docs/security.md |
 
 ---
 

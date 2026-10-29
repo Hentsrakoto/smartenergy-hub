@@ -112,7 +112,8 @@ public class DailySummaryService {
         }
 
         double average = sum / count;
-        double energyKwh = computeEnergyKwh(sorted, sensor.getSamplingIntervalSeconds());
+        double energyKwh = computeEnergyKwh(sorted, sensor.getSamplingIntervalSeconds(),
+                date.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
 
         DailySummaryDocument summary = new DailySummaryDocument();
         summary.setId(sensor.getSensorId() + ":" + date);
@@ -146,7 +147,7 @@ public class DailySummaryService {
         return temperature != null && temperature > sensor.getMaxTemperature();
     }
 
-    private double computeEnergyKwh(List<MeasurementEntity> sorted, int samplingIntervalSeconds) {
+    private double computeEnergyKwh(List<MeasurementEntity> sorted, int samplingIntervalSeconds, Instant dayEnd) {
         double energy = 0.0;
         int fallbackInterval = Math.max(1, samplingIntervalSeconds);
 
@@ -155,6 +156,9 @@ public class DailySummaryService {
             Instant end = (i + 1 < sorted.size())
                     ? sorted.get(i + 1).getMeasuredAt()
                     : start.plusSeconds(fallbackInterval);
+            if (end.isAfter(dayEnd)) {
+                end = dayEnd;
+            }
 
             long millis = Duration.between(start, end).toMillis();
             if (millis <= 0) {

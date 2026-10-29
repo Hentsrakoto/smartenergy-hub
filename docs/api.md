@@ -66,4 +66,6 @@ L'énergie Analytics estime le maintien de puissance entre échantillons, chaque
 
 Le rapport est un instantané conservé dans `reports`, clé `sensorId:date`, statut `ALERT` si `anomalyCount>0`, sinon `NORMAL`. Le premier GET le matérialise depuis MongoDB ; les suivants rendent le même instantané, même si le résumé évolue ensuite. Aucun appel Cassandra n'est nécessaire. Ce choix de matérialisation à la lecture et l'absence de régénération sont des limites explicites du MVP.
 
-La route latest sans jour utilise les résumés MongoDB comme index des jours du capteur enregistré. Les mesures reçues avant son enregistrement, sans résumé, exigent `day` ou la génération préalable de leur résumé quotidien. L'historique reste disponible pour ces mesures. L'historique général n'est pas encore paginé ; utiliser des périodes courtes.
+La route latest sans jour utilise les résumés MongoDB comme index des jours du capteur enregistré. Les mesures reçues avant son enregistrement, sans résumé, exigent `day` ou la génération préalable de leur résumé quotidien. L'historique reste disponible pour ces mesures. L'historique général est limité à 31 jours et n'est pas encore paginé ; utiliser des périodes courtes.
+
+Depuis l'étape 12, les diagnostics `/api/storage/**` sont désactivés par défaut. Le profil `demo` désactive également Swagger/OpenAPI et lie les API à 127.0.0.1. Voir `docs/security.md` pour les profils et les accès sensibles. Le profil `local`, actif par défaut, conserve Swagger.

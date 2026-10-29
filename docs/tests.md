@@ -1,5 +1,23 @@
 # Tests et preuves
 
+## Étape 12 — 2026-10-29
+
+Deux tests initialement rouges (diagnostics exposés par défaut et plage >31 jours acceptée), puis correction et suites complètes : Storage **93 tests**, Collector **18 tests**, zéro échec/erreur. Avec les deux applications en profil demo, `python3 scripts/verify_security.py` code 0 : Swagger et diagnostics 404, Actuator sensible non exposé, santé UP, validation et période excessive 400. `ss` confirme les quatre sockets loopback. Recherche ciblée de signatures de secrets dans les deux commits accessibles et le répertoire : aucune correspondance ; limite de ce contrôle documentée dans `docs/security.md`.
+
+## Étape 11 — 2026-10-29
+
+Actuator ajouté aux deux services. Suites Collector **18 tests** et Storage **91 tests**, aucun échec/erreur. Tests spécifiques : succès/erreur de persistance (exception propagée) et jauge PEL 7/0/NaN. `python3 scripts/verify_observability.py` code 0 : deux health UP sans détails, env 404, trois acceptations et une validation 400, trois persistances, durée cumulée 0.257468958 s, pending=0, erreurs de persistance=0. Ports 9081 et 9083 liés à 127.0.0.1 ; endpoints de supervision absents des ports métier (404). Rapport : `compte_rendu/etape_11/compte_rendu.md`.
+
+## Étape 10 — 2026-10-29
+
+Compose valide, image simulateur construite et exécutée sous UID 10001. Cinq tests Python passent. Essai Docker de cinq capteurs : 15 réponses HTTP 202, zéro rejet/erreur ; Redis XLEN passe de 4 à 19, pending=0, trois lignes Cassandra pour chaque capteur. Redémarrage des trois bases : document MongoDB et lignes Cassandra étape 9 conservés, script santé code 0. Empreinte du contenu Redis identique avant/après un second restart Redis. Rapport et commandes : `compte_rendu/etape_10/compte_rendu.md`.
+
+## Étape 9 — 2026-10-29
+
+Suite Storage finale `mvn -o -q test` : **89 tests, 0 échec, 0 erreur**, hors bac à sable JVM. Régression à minuit d'abord rouge (0.1 au lieu de 0.05 kWh), puis verte. Cas ajoutés : historique vide, seuils exacts, température absente, motifs multiples, intervalles irréguliers, lacune plafonnée.
+
+`python3 scripts/verify_analytics.py` : sortie 0 ; capteur `stage9-7877e06d1b87`, mesures 1/3/6 kW, moyenne 3.333333, énergie 0.166667 kWh, une anomalie. Trois lignes CQL et agrégat MongoDB correspondants vérifiés, XPENDING=0. Rapport : `compte_rendu/etape_9/compte_rendu.md`. Politique : `docs/analytics.md`.
+
 ## Compléments étapes 6 et 8 — 2026-10-29
 
 - Suites hors bac à sable : Collector 18 tests, Storage 83 tests après correction énergie, aucun échec/erreur. Commande dans chaque service : `mvn -o -q test`.
