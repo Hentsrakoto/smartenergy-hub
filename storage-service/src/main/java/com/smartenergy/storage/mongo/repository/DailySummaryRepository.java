@@ -13,4 +13,6 @@ import java.util.Optional;
 public interface DailySummaryRepository extends MongoRepository<DailySummaryDocument, String> {
 
     Optional<DailySummaryDocument> findBySensorIdAndDate(String sensorId, String date);
+
+    Optional<DailySummaryDocument> findFirstBySensorIdOrderByDateDesc(String sensorId);
 }

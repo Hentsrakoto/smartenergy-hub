@@ -3,13 +3,11 @@
 #
 # RÈGLES D'EXÉCUTION DU PROJET :
 # 1. Spring Boot (Collector, Storage) et Streamlit tournent SUR L'HÔTE (hors Docker).
-# 2. Apache Cassandra tourne dans le conteneur autonome 'smartenergy-cassandra'
-#    du contexte Docker 'default' (port hôte 127.0.0.1:9042). L'ancien conteneur
-#    'cassandra' et son volume sont conservés, mais ne sont pas utilisés par le projet.
-#    Cassandra n'est pas redéclarée ici pour éviter une seconde instance.
-# 3. Ce fichier compose gère exclusivement les dépendances conteneurisées supplémentaires :
+# 2. Ce fichier Compose gère les dépendances conteneurisées du projet :
 #    - Redis Streams (buffer de transport d'événements)
 #    - MongoDB (métadonnées, alertes, synthèses quotidiennes)
+#    - Cassandra (mesures temporelles) et son initialiseur CQL idempotent
+# 3. Les bases sont accessibles depuis l'hôte uniquement via 127.0.0.1.
 # ==============================================================================
 
 services:
@@ -19,7 +17,7 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       # Port hôte 6380 pour ne pas entrer en conflit avec tsidika-redis (port 6379)
-      - "${REDIS_PORT:-6380}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
     volumes:
       - smartenergy_redis_data:/data
     networks:
@@ -51,13 +49,46 @@ services:
       retries: 5
       start_period: 10s
 
+  smartenergy-cassandra:
+    image: cassandra:4.1
+    container_name: smartenergy-cassandra
+    ports:
+      - "127.0.0.1:${CASSANDRA_PORT:-9042}:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: ${CASSANDRA_CLUSTER_NAME:-SmartEnergy Hub}
+      CASSANDRA_DC: ${CASSANDRA_LOCAL_DATACENTER:-datacenter1}
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    volumes:
+      - smartenergy_cassandra_data:/var/lib/cassandra
+    networks:
+      - smartenergy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cqlsh", "127.0.0.1", "9042", "-e", "SELECT release_version FROM system.local;"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
 
+  smartenergy-cassandra-init:
+    image: cassandra:4.1
+    depends_on:
+      smartenergy-cassandra:
+        condition: service_healthy
+    volumes:
+      - ./scripts/init_cassandra.cql:/scripts/init_cassandra.cql:ro
+    networks:
+      - smartenergy-network
+    command: ["cqlsh", "smartenergy-cassandra", "9042", "-f", "/scripts/init_cassandra.cql"]
+    restart: "no"
 
 volumes:
   smartenergy_redis_data:
     name: smartenergy_redis_data
   smartenergy_mongo_data:
     name: smartenergy_mongo_data
+  smartenergy_cassandra_data:
+    name: smartenergy_cassandra_data
 
 networks:
   smartenergy-network:

@@ -1,7 +1,17 @@
 package com.smartenergy.storage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.smartenergy.storage.exception.ApiErrorResponse;
+
 import com.smartenergy.storage.cassandra.entity.MeasurementEntity;
 import com.smartenergy.storage.cassandra.service.CassandraMeasurementService;
+import com.smartenergy.storage.service.LatestMeasurementService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +30,12 @@ import java.util.Optional;
 public class MeasurementHistoryController {
 
     private final CassandraMeasurementService cassandraService;
+    private final LatestMeasurementService latestMeasurementService;
 
-    public MeasurementHistoryController(CassandraMeasurementService cassandraService) {
+    public MeasurementHistoryController(CassandraMeasurementService cassandraService,
+                                        LatestMeasurementService latestMeasurementService) {
         this.cassandraService = cassandraService;
+        this.latestMeasurementService = latestMeasurementService;
     }
 
     /**
@@ -34,10 +47,16 @@ public class MeasurementHistoryController {
      * @param day      date au format ISO-8601 (ex: 2026-10-21)
      * @return liste des mesures, plus récent en premier
      */
+    @Operation(summary = "Lire les mesures du jour UTC, ordre décroissant")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{sensorId}/day/{day}")
     public ResponseEntity<List<MeasurementEntity>> getByDay(
-            @PathVariable String sensorId,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day) {
+            @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String sensorId,
+            @Parameter(description = "Jour UTC", example = "2026-10-22") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day) {
         List<MeasurementEntity> result = cassandraService.findByDay(sensorId, day);
         return ResponseEntity.ok(result);
     }
@@ -52,11 +71,17 @@ public class MeasurementHistoryController {
      * @param to       borne supérieure ISO-8601 UTC (ex: 2026-10-21T23:59:59Z)
      * @return liste des mesures dans l'intervalle, plus récent en premier par jour
      */
+    @Operation(summary = "Lire les mesures entre deux instants UTC inclus, ordre décroissant")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Mesures dans la plage", content = @Content(array = @ArraySchema(schema = @Schema(implementation = MeasurementEntity.class)))),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{sensorId}/history")
     public ResponseEntity<?> getHistory(
-            @PathVariable String sensorId,
-            @RequestParam Instant from,
-            @RequestParam Instant to) {
+            @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String sensorId,
+            @Parameter(description = "Début UTC inclus", example = "2026-10-22T00:00:00Z") @RequestParam Instant from,
+            @Parameter(description = "Fin UTC incluse", example = "2026-10-22T23:59:59Z") @RequestParam Instant to) {
         if (from.isAfter(to)) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Requête invalide",
@@ -76,13 +101,22 @@ public class MeasurementHistoryController {
      * @param day      date au format ISO-8601
      * @return la mesure la plus récente ou 404
      */
+    @Operation(summary = "Lire la dernière mesure connue ; day limite la recherche à ce jour UTC")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Capteur ou mesures absents", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{sensorId}/latest")
-    public ResponseEntity<?> getLatest(
-            @PathVariable String sensorId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day) {
-        Optional<MeasurementEntity> latest = cassandraService.findLatest(sensorId, day);
+    public ResponseEntity<MeasurementEntity> getLatest(
+            @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String sensorId,
+            @Parameter(description = "Jour UTC facultatif ; dernière mesure connue si absent", example = "2026-10-22") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day) {
+        Optional<MeasurementEntity> latest = day == null
+                ? latestMeasurementService.findLatestKnown(sensorId)
+                : cassandraService.findLatest(sensorId, day);
         return latest
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 }

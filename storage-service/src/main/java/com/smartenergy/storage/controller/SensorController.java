@@ -1,5 +1,13 @@
 package com.smartenergy.storage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.smartenergy.storage.exception.ApiErrorResponse;
+
 import com.smartenergy.storage.mongo.dto.DailySummaryResponse;
 import com.smartenergy.storage.mongo.dto.SensorRequest;
 import com.smartenergy.storage.mongo.dto.SensorResponse;
@@ -45,6 +53,13 @@ public class SensorController {
         this.dailySummaryService = dailySummaryService;
     }
 
+    @Operation(summary = "Créer un capteur")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "409", description = "Identifiant existant", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<SensorResponse> create(@Valid @RequestBody SensorRequest request) {
         SensorResponse created = sensorService.create(request);
@@ -53,19 +68,38 @@ public class SensorController {
                 .body(created);
     }
 
+    @Operation(summary = "Lister les capteurs")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<List<SensorResponse>> findAll() {
         return ResponseEntity.ok(sensorService.findAll());
     }
 
+    @Operation(summary = "Consulter les métadonnées")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Capteur ou mesures absents", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<SensorResponse> findById(@PathVariable String id) {
+    public ResponseEntity<SensorResponse> findById(@Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String id) {
         return ResponseEntity.ok(sensorService.findById(id));
     }
 
+    @Operation(summary = "Modifier les métadonnées et seuils")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Capteur ou mesures absents", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @PutMapping("/{id}")
     public ResponseEntity<SensorResponse> update(
-            @PathVariable String id,
+            @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String id,
             @Valid @RequestBody SensorRequest request) {
         return ResponseEntity.ok(sensorService.update(id, request));
     }
@@ -77,12 +111,20 @@ public class SensorController {
      * n'existe pas encore dans MongoDB, il est calculé depuis Cassandra puis stocké.
      * {@code refresh=true} force un recalcul.</p>
      */
+    @Operation(summary = "Lire un résumé quotidien ; date UTC courante par défaut, refresh force le recalcul")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Succès"),
+        @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Capteur ou mesures absents", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{id}/daily-summary")
     public ResponseEntity<DailySummaryResponse> dailySummary(
-            @PathVariable String id,
+            @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String id,
+            @Parameter(description = "Jour UTC ; aujourd’hui si absent", example = "2026-10-22")
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(defaultValue = "false") boolean refresh) {
+            @Parameter(description = "Forcer le recalcul depuis Cassandra", example = "false") @RequestParam(defaultValue = "false") boolean refresh) {
         LocalDate targetDate = date != null ? date : LocalDate.now(ZoneOffset.UTC);
         return ResponseEntity.ok(dailySummaryService.getOrCompute(id, targetDate, refresh));
     }

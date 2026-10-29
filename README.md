@@ -11,8 +11,8 @@ Plateforme distribuée d'ingestion, de traitement en flux, d'analyse et de super
 - **Persistance polyglotte adaptée** :
   - **Apache Cassandra** : Séries temporelles volumineuses horodatées, partitionnées par `(sensor_id, day)`.
   - **MongoDB** : Métadonnées riches des capteurs, configurations d'alertes et agrégats journaliers.
-- **Analytics & IA** : Calculs descriptifs (kWh, min, max, moyennes), détection d'anomalies (surconsommation, surtension) et modèles prédictifs.
-- **Visualisation & Restitution** : Dashboard interactif **Streamlit** et documentation OpenAPI / Swagger UI.
+- **Analytique actuelle** : résumés quotidiens (kWh, min, max, moyenne) et détection par seuil ; les endpoints Analytics et les modèles prédictifs restent à développer.
+- **Restitution prévue** : documentation OpenAPI / Swagger UI et dashboard Streamlit à développer à l'étape 8 ou après.
 
 ---
 
@@ -29,14 +29,14 @@ Plateforme distribuée d'ingestion, de traitement en flux, d'analyse et de super
         │  XREADGROUP (storage-group)
         ▼
 [ Storage Service (Spring Boot - Hôte : 8083) ]
-       ├──▶ Cassandra (Docker existant : 9042)  -> Séries temporelles
+       ├──▶ Cassandra 4.1 (Docker : 9042)       -> Séries temporelles
        └──▶ MongoDB (Docker : 27017)           -> Métadonnées & Agrégats
         │  XACK (post-persistance)
         ▼
-[ API Consultation / Analytics (Spring Boot / Swagger : 8083) ]
+[ API de consultation existante (Storage : 8083) ]
         ▲
         │  Consultation REST
-[ Dashboard Streamlit (Python - Hôte : 8501) ]
+[ Dashboard Streamlit prévu (Hôte : 8501) ]
 ```
 
 Consulter [`docs/architecture.md`](docs/architecture.md) pour les justifications détaillées et la conception technique.
@@ -50,13 +50,13 @@ Consulter [`docs/architecture.md`](docs/architecture.md) pour les justifications
   - Applications Spring Boot (`collector-service`, `storage-service`).
   - Dashboard utilisateur `streamlit`.
 - **Dans Docker** :
-  - **Apache Cassandra** : conteneur `smartenergy-cassandra` (`cassandra:4.0`, version 4.0.21 vérifiée), volume nommé distinct, port hôte `127.0.0.1:9042`. L'ancien conteneur `cassandra` est conservé et arrêté.
+  - **Apache Cassandra** : conteneur `smartenergy-cassandra` (`cassandra:4.1`, version 4.1.12 vérifiée sur ce PC), volume `smartenergy_cassandra_data`, port hôte `127.0.0.1:9042`.
   - **Redis Streams** : Conteneur `smartenergy-redis` (`redis:7.4-alpine`, port hôte 6380).
   - **MongoDB** : conteneur `smartenergy-mongo` (`mongo:7.0-jammy`, port hôte `127.0.0.1:27017`), volume `smartenergy_mongo_data`. Voir [l'installation Docker](docs/docker-databases.md).
 
 ### Prérequis système vérifiés
 - **JDK** : OpenJDK 17.0.20.1 (installé)
-- **Build tool** : Apache Maven 3.8.7 (installé)
+- **Build tool** : Apache Maven 3.9.12 (installé)
 - **Python** : Python 3.12.3 (installé)
 - **Docker & Docker Compose** : Opérationnels
 
@@ -64,31 +64,35 @@ Consulter [`docs/architecture.md`](docs/architecture.md) pour les justifications
 
 ## 4. Démarrage Rapide
 
-### 1. Vérifier le contexte Docker et démarrer Cassandra
+### 1. Vérifier le contexte, les conteneurs et les ports
 ```bash
 docker context show
-docker --context default start smartenergy-cassandra
-docker --context default exec smartenergy-cassandra nodetool status
+docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+ss -ltn
+docker compose config
 ```
 
-Le projet utilise le contexte `default` ; `desktop-linux` est un daemon séparé où ces conteneurs ne sont pas présents. L'ancien conteneur `cassandra` ne doit pas être démarré en parallèle.
+Sur ce PC, le contexte vérifié est `default`. Les ports 6380, 27017 et 9042 appartiennent aux bases SmartEnergy ; les ports 8081 et 8083 doivent être libres avant de lancer Spring Boot. Préserver tous les conteneurs et données d'autres projets.
 
-### 2. Démarrer Redis et MongoDB après avoir vérifié l'image MongoDB
+### 2. Démarrer les bases et initialiser le schéma
 ```bash
-docker --context default compose up -d smartenergy-redis smartenergy-mongo
-docker --context default compose ps
+docker compose up -d
+docker compose ps -a
+# Attendre que Redis, MongoDB et Cassandra soient tous healthy.
+docker inspect --format '{{.Name}} {{.State.Health.Status}}' \
+  smartenergy-redis smartenergy-mongo smartenergy-cassandra
+# L'initialiseur CQL doit terminer avec le code 0.
+init_id="$(docker compose ps -a -q smartenergy-cassandra-init)"
+docker wait "$init_id"
+test "$(docker inspect --format '{{.State.ExitCode}}' "$init_id")" = 0
+scripts/verify_databases.sh
 ```
 
-L'image MongoDB a été téléchargée dans le contexte `default` le 2026-10-26. Son installation et sa vérification sont décrites dans [le guide Docker](docs/docker-databases.md).
+Si les images manquent, `docker compose pull` les télécharge. Compose fournit les trois bases et l'initialiseur idempotent ; détails et attente de santé bornée dans [le guide Docker](docs/docker-databases.md). Le schéma est appliqué sans suppression de données.
 
-### 2 bis. Initialiser le keyspace et la table Cassandra (idempotent)
-```bash
-# Aucun DROP : le script peut être rejoué sans perdre les données existantes.
-docker --context default exec -i smartenergy-cassandra cqlsh < scripts/init_cassandra.cql
+### 2 bis. Vérifier les suites Java sur le nouveau PC
 
-# Vérifier le schéma :
-docker --context default exec smartenergy-cassandra cqlsh -e "DESCRIBE TABLE smartenergy.measurements_by_sensor_day;"
-```
+Dans chaque module, lancer `mvn -q test` en ligne au premier passage pour remplir le cache Maven. Un cache incomplet fait échouer `mvn -o` avant les tests. Les variables de connexion disponibles sont dans `.env.example` ; les valeurs par défaut des applications correspondent aux ports ci-dessus. Compose lit `.env`, mais Maven ne le charge pas automatiquement : exporter les variables nécessaires dans les terminaux Spring Boot si les ports sont personnalisés.
 
 ### 3. Lancer les services Spring Boot (sur l'hôte)
 ```bash
@@ -99,14 +103,9 @@ cd collector-service && mvn spring-boot:run
 cd storage-service && mvn spring-boot:run
 ```
 
-### 4. Lancer le Simulateur et le Dashboard Streamlit
-```bash
-# Terminal 3 : Simulateur
-python3 simulator/sensor_simulator.py
+### 4. Simulateur et Dashboard (étapes distinctes)
 
-# Terminal 4 : Dashboard Streamlit (Port 8501)
-streamlit run dashboard/app.py
-```
+Le simulateur dispose de `simulator/Dockerfile` ; son scénario n'est pas relancé dans cette reprise des bases. Le Dashboard Streamlit reste à implémenter : aucun fichier `dashboard/app.py` n'est présent. Lorsqu'il sera ajouté, il devra être lancé sur l'hôte.
 
 ### 5. Vérifier la persistance Cassandra
 ```bash
@@ -130,12 +129,13 @@ docker --context default exec smartenergy-cassandra cqlsh -e \
 - [Checklist d'avancement](docs/progress.md)
 - [Architecture détaillée](docs/architecture.md)
 - [Installation Docker des bases](docs/docker-databases.md)
+- [Reprise sur ce PC : bases, suites Java et scénario réel](compte_rendu/etape_8/reprise_nouveau_pc_bases.md)
 - [Reprise de l'étape 5](compte_rendu/etape_5/reprise-2026-10-26.md)
 - [API capteurs et résumés (étape 6)](docs/api.md)
 - [Tests et preuves](docs/tests.md)
 - [Compte rendu de l'étape 6](compte_rendu/etape_6/compte_rendu.md)
 - [Compte rendu de l'étape 7](compte_rendu/etape_7/compte_rendu.md)
-- Comptes-rendus d'étapes : `/home/hents/Documents/code/techweb2/compte_rendu/`
+- Comptes rendus versionnés : `compte_rendu/` (les anciens chemins absolus désignent la machine précédente).
 
 ## 6. Traitement fiable des mesures (étape 7, en cours)
 

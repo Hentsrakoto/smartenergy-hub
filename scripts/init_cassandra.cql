@@ -4,7 +4,9 @@
 -- NE contient aucune instruction DROP destructive.
 --
 -- Exécution :
---   docker exec cassandra cqlsh -f /path/to/init_cassandra.cql
+--   docker compose run --rm smartenergy-cassandra-init
+-- ou depuis la racine du dépôt, vers le conteneur Cassandra :
+--   docker exec -i smartenergy-cassandra cqlsh < scripts/init_cassandra.cql
 -- ou depuis l'hôte (si cqlsh disponible) :
 --   cqlsh localhost 9042 -f scripts/init_cassandra.cql
 -- =============================================================================
