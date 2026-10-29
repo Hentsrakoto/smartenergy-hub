@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        name = "smartenergy.diagnostics.enabled", havingValue = "true")
 @RequestMapping("/api/storage")
 public class StorageStatusController {
 

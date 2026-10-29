@@ -1,5 +1,67 @@
 # Tests et preuves
 
+## Étape 12 — 2026-10-29
+
+Deux tests initialement rouges (diagnostics exposés par défaut et plage >31 jours acceptée), puis correction et suites complètes : Storage **93 tests**, Collector **18 tests**, zéro échec/erreur. Avec les deux applications en profil demo, `python3 scripts/verify_security.py` code 0 : Swagger et diagnostics 404, Actuator sensible non exposé, santé UP, validation et période excessive 400. `ss` confirme les quatre sockets loopback. Recherche ciblée de signatures de secrets dans les deux commits accessibles et le répertoire : aucune correspondance ; limite de ce contrôle documentée dans `docs/security.md`.
+
+## Étape 11 — 2026-10-29
+
+Actuator ajouté aux deux services. Suites Collector **18 tests** et Storage **91 tests**, aucun échec/erreur. Tests spécifiques : succès/erreur de persistance (exception propagée) et jauge PEL 7/0/NaN. `python3 scripts/verify_observability.py` code 0 : deux health UP sans détails, env 404, trois acceptations et une validation 400, trois persistances, durée cumulée 0.257468958 s, pending=0, erreurs de persistance=0. Ports 9081 et 9083 liés à 127.0.0.1 ; endpoints de supervision absents des ports métier (404). Rapport : `compte_rendu/etape_11/compte_rendu.md`.
+
+## Étape 10 — 2026-10-29
+
+Compose valide, image simulateur construite et exécutée sous UID 10001. Cinq tests Python passent. Essai Docker de cinq capteurs : 15 réponses HTTP 202, zéro rejet/erreur ; Redis XLEN passe de 4 à 19, pending=0, trois lignes Cassandra pour chaque capteur. Redémarrage des trois bases : document MongoDB et lignes Cassandra étape 9 conservés, script santé code 0. Empreinte du contenu Redis identique avant/après un second restart Redis. Rapport et commandes : `compte_rendu/etape_10/compte_rendu.md`.
+
+## Étape 9 — 2026-10-29
+
+Suite Storage finale `mvn -o -q test` : **89 tests, 0 échec, 0 erreur**, hors bac à sable JVM. Régression à minuit d'abord rouge (0.1 au lieu de 0.05 kWh), puis verte. Cas ajoutés : historique vide, seuils exacts, température absente, motifs multiples, intervalles irréguliers, lacune plafonnée.
+
+`python3 scripts/verify_analytics.py` : sortie 0 ; capteur `stage9-7877e06d1b87`, mesures 1/3/6 kW, moyenne 3.333333, énergie 0.166667 kWh, une anomalie. Trois lignes CQL et agrégat MongoDB correspondants vérifiés, XPENDING=0. Rapport : `compte_rendu/etape_9/compte_rendu.md`. Politique : `docs/analytics.md`.
+
+## Compléments étapes 6 et 8 — 2026-10-29
+
+- Suites hors bac à sable : Collector 18 tests, Storage 83 tests après correction énergie, aucun échec/erreur. Commande dans chaque service : `mvn -o -q test`.
+- Régression énergie : fenêtre nulle initialement à 0,1 kWh (test rouge), puis 0 après limitation à `to` (test vert).
+- Bases `healthy` ; Storage démarré sur hôte. `/v3/api-docs` et `/swagger-ui/index.html` HTTP 200.
+- Sur `task3-20261027T130350Z-dc21d26c` : rapport quotidien ALERT et document MongoDB `reports` vérifiés ; latest retourne 4 kW ; résumé count=1/energyKwh=0.066667 ; anomalie `POWER_ABOVE_MAX`.
+- Détails et commandes : `compte_rendu/etape_6/complement_rapports_2026-10-29.md` et `compte_rendu/etape_8/api_consultation_2026-10-29.md`.
+- Storage arrêté par Ctrl+C après contrôle, sortie 0. Le listener Redis journalise `Connection closed` pendant l'arrêt, déjà observé précédemment ; bases conservées actives.
+- Après annotations finales, tests OpenAPI relancés sur les deux services : code 0. La revue indépendante a également exécuté 28 tests ciblés OpenAPI/contrôleurs avec succès (codes 202/201/409 et schémas history/latest vérifiés).
+
+## Contrôle final sur le PC de bureau — 2026-10-28
+
+Après la correction du statut de l'étape 8, `docker compose config --quiet` et `scripts/verify_databases.sh` ont terminé avec le code 0. Redis a répondu `PONG`, MongoDB `ok: 1`, Cassandra était `UN` dans `datacenter1` et la table `smartenergy.measurements_by_sensor_day` existait. `docker compose ps -a` montrait les trois bases `healthy`, l'initialiseur `Exited (0)` et les ports `6380`, `27017` et `9042` liés à `127.0.0.1`.
+
+Les deux suites lancées initialement dans le bac à sable ont échoué avant les assertions Mockito : Byte Buddy ne pouvait pas attacher son agent à la JVM. Les mêmes commandes ont été relancées hors de cette restriction, sans modification du code :
+
+```bash
+cd /home/hentsrakoto/Documents/code/smartenergy-hub/collector-service && mvn -o -q test
+cd /home/hentsrakoto/Documents/code/smartenergy-hub/storage-service && mvn -o -q test
+```
+
+Les deux commandes ont terminé avec le code 0. Les XML Surefire de cette relance contiennent **16 tests Collector** et **69 tests Storage**, avec **0 échec, 0 erreur et 0 ignoré**. `bash -n scripts/verify_databases.sh` et `git diff --check` ont aussi terminé avec le code 0. Ce contrôle final n'a pas rejoué le scénario d'écriture de bout en bout ni le redémarrage des bases ; leurs preuves du 2026-10-27 figurent ci-dessous et dans le compte rendu permanent.
+
+## Reprise sur le nouveau PC — 2026-10-27
+
+Les preuves ci-dessous concernent cette machine ; les sections suivantes conservent l'historique de la précédente. Commandes en ligne exécutées dans deux processus distincts, puis rejouées après le scénario réel :
+
+```bash
+cd /home/hentsrakoto/Documents/code/smartenergy-hub/collector-service && mvn -q test
+cd /home/hentsrakoto/Documents/code/smartenergy-hub/storage-service && mvn -q test
+```
+
+Premier passage et passage final après E2E : **Collector 16 tests / 3 suites**, **Storage 69 tests / 10 suites**, exit 0 chacun, 0 échec, 0 erreur, 0 ignoré ; comptage XML Surefire. Le premier passage a téléchargé les dépendances Maven absentes. Les tests automatisés utilisent principalement des doublures ; la connexion aux bases est vérifiée séparément. Aucun code ou test Java modifié.
+
+Versions : JDK `17.0.20.1`, Maven `3.9.12`, Spring Boot `3.3.4`, Docker `29.9.0`, Compose `v5.0.2`, Redis `7.4.12`, MongoDB `7.0.45`, Cassandra `4.1.12`. Les trois bases ont été contrôlées healthy avant les applications ; initialiseur `Exited (0)`.
+
+Collector et Storage ont été lancés sur l'hôte par `mvn spring-boot:run`, ports `8081` / `8083`. Le script de contrôle `python3 /tmp/smartenergy-task3.4LfS8h/e2e.py` a terminé avec **exit 0**. Son source complet, les commandes Docker/NoSQL, les réponses et les paramètres reproductibles figurent dans le [compte rendu permanent](../compte_rendu/etape_8/reprise_nouveau_pc_bases.md).
+
+Observations : capteur `task3-20261027T130350Z-dc21d26c`, instant `2026-10-27T13:03:50Z`, mesure `4 kW`, `230 V`, `22 °C`, intervalle `60 s`, seuil `3 kW`. Création HTTP `201`, acceptation Collector `202` sans corps, Redis ID `1793106232857-0`, `XLEN 0 → 1`, `pending=0`, `lag=0`. Une ligne Cassandra exacte ; capteur et résumé présents dans MongoDB avant toute lecture du résumé HTTP : `measurementCount=1`, min/moyenne/max `4`, `energyKwh=0.066667`, `anomalyCount=1`. Historique et résumé HTTP `200`. L'énergie vaut `4 × 60/3600`, arrondie à six décimales ; l'anomalie est une règle à seuil.
+
+Rejets : `sensorId="sensor/invalid"`, `powerKw=-1` → HTTP `400`, erreurs de champs explicites et `XLEN=1` avant/après ; historique `from=2026-10-27T01:00:00Z` / `to=2026-10-27T00:00:00Z` → HTTP `400`, message `'from' doit être antérieur ou égal à 'to'`.
+
+Après contrôle, Ctrl+C uniquement dans les deux terminaux Spring Boot lancés : Maven termine avec `BUILD SUCCESS` et exit 0. Storage affiche une exception Redis `Connection closed` pendant sa fermeture ; aucune erreur de traitement n'a été observée avant l'arrêt, message déjà acquitté. Les bases restent actives et les données de contrôle sont conservées. Persistance des trois bases après redémarrage et deux rejeux CQL : preuves de Task 2 reprises dans le même compte rendu, sans second redémarrage revendiqué ici. Swagger et les nouveaux endpoints Analytics n'ont pas été implémentés ni validés par cette reprise.
+
 ## Reprise de l'étape 5 — 2026-10-26
 
 Le contexte Docker `default` contient la nouvelle instance `smartenergy-cassandra`. `nodetool status` a retourné `UN`. Le script CQL idempotent a créé la table dont `DESCRIBE TABLE` confirme la clé primaire `((sensor_id, day), measured_at)` et le clustering descendant. Une insertion dans la partition `('stage5-check-20261026', '2026-10-26')` a été relue avec la valeur `4.25 kW` (une ligne). Les 9 tests ciblés Cassandra et mapping ont passé avec 0 échec et 0 erreur. Ensuite, l'événement Redis `1793032568198-0` pour `stage5stream20261026` a été consommé et acquitté (`XPENDING=0`) ; la mesure `5.5 kW` a été lue via l'API HTTP du Storage Service. Les commandes exactes figurent dans [la reprise de l'étape 5](../compte_rendu/etape_5/reprise-2026-10-26.md).

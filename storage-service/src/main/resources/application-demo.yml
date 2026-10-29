@@ -1,0 +1,11 @@
+# Démonstration locale uniquement, sans authentification.
+server:
+  address: 127.0.0.1
+smartenergy:
+  diagnostics:
+    enabled: false
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

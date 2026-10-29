@@ -1,7 +1,26 @@
 server:
   port: ${COLLECTOR_SERVER_PORT:8081}
+  address: 127.0.0.1
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+management:
+  server:
+    port: ${COLLECTOR_MANAGEMENT_PORT:9081}
+    address: 127.0.0.1
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: never
 
 spring:
+  profiles:
+    default: local
   application:
     name: collector-service
   data:

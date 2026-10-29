@@ -1,0 +1,3 @@
+smartenergy:
+  diagnostics:
+    enabled: ${STORAGE_DIAGNOSTICS_ENABLED:false}

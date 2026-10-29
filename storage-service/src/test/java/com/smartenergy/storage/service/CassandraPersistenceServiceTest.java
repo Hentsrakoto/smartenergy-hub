@@ -36,7 +36,8 @@ class CassandraPersistenceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CassandraPersistenceService(cassandraService, dailySummaryService);
+        service = new CassandraPersistenceService(cassandraService, dailySummaryService,
+                new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
     }
 
     @Test

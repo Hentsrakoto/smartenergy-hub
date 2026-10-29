@@ -17,16 +17,16 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 | **Étape 0** | Inspection de l'environnement, cartographie et architecture | **Validé** | 2026-10-20 | Audit Docker, Cassandra identifié, ports audités, docs initialisées |
 | **Étape 1** | Contrat de données (`MeasurementDto` + validation Jakarta) | **Validé** | 2026-10-20 | 15/15 tests unitaires et WebMvc réussis (DTO, 400 clair, schéma JSON) |
 | **Étape 2** | Simulateur de capteurs IoT (multi-capteurs, anomalies) | **Validé** | 2026-10-20 | Simulateur Python + Dockerfile, test 5 capteurs x 2 min (295 requêtes 202, pic x3) |
-| **Étape 3** | Collector Service Spring Boot (`POST /api/measurements` -> 202) | **Validé** (en attente confirmation) | 2026-10-20 | Ingestion 202, Redis Streams `smartenergy-redis` port 6380, preuve XRANGE ID |
-| **Étape 4** | Redis Streams (Consumer Group `storage-group`, ACK, reprise) | **Validé** (en attente confirmation) | 2026-10-21 | Consumer group configuré, XACK post-persistance, PEL testée, reprise sans perte prouvée |
-| **Étape 5** | Cassandra (Modélisation séries temporelles, partition key) | **En cours** (preuves réalisées, en attente validation) | - | Nouvelle instance `UN`, écriture/lecture CQL, Redis → Storage → Cassandra et lecture HTTP vérifiés le 2026-10-26 |
-| **Étape 6** | MongoDB (Métadonnées capteurs, agrégats, résumés quotidiens) | **En cours** (preuves réelles, en attente validation) | - | MongoDB `healthy`, CRUD HTTP, résumé réel, lecture sans Cassandra, persistance après redémarrage ; rapports métier restants |
-| **Étape 7** | Storage Service Spring Boot (Consommation Redis, Cassandra + Mongo) | **En cours** | - | E2E, rejeu, panne Mongo et arrêt Storage vérifiés ; validation étudiante attendue |
-| **Étape 8** | API de consultation REST & Documentation OpenAPI / Swagger | `À faire` | - | Historique, résumés analytiques, Swagger UI |
-| **Étape 9** | Analytics & Détection d'anomalies (Descriptif, seuils, IA) | `À faire` | - | Moyennes, kWh estimés, règles anomalies |
-| **Étape 10**| Conteneurisation Docker Compose & Persistance | `À faire` | - | Redis + MongoDB Docker, Cassandra dédiée sur Docker `default`, Spring Boot sur hôte ; validation globale à venir |
-| **Étape 11**| Observabilité & Supervision (Spring Boot Actuator, métriques) | `À faire` | - | Health endpoints, métriques custom ingestion/stockage |
-| **Étape 12**| Sécurité & Durcissement (.env, validation entrées, profils) | `À faire` | - | Aucun secret dans git, ports sécurisés |
+| **Étape 3** | Collector Service Spring Boot (`POST /api/measurements` -> 202) | **Validé** | 2026-10-28 | Preuves HTTP/Redis et tests documentés ; validation explicite de l'étudiant le 2026-10-28 |
+| **Étape 4** | Redis Streams (Consumer Group `storage-group`, ACK, reprise) | **Validé** | 2026-10-28 | PEL, reprise sans perte et tests documentés ; validation explicite de l'étudiant le 2026-10-28 |
+| **Étape 5** | Cassandra (Modélisation séries temporelles, partition key) | **Validé** | 2026-10-28 | Écriture/lecture CQL et HTTP sur le nouveau PC ; validation explicite de l'étudiant le 2026-10-28 |
+| **Étape 6** | MongoDB (Métadonnées capteurs, agrégats, résumés quotidiens) | **Validé** | 2026-10-29 | Rapports MongoDB, lecture HTTP et document `reports` vérifiés ; tests passés et validation explicite de l'étudiant le 2026-10-29 |
+| **Étape 7** | Storage Service Spring Boot (Consommation Redis, Cassandra + Mongo) | **Validé** | 2026-10-28 | E2E, rejeu, panne Mongo et arrêt Storage vérifiés ; validation explicite de l'étudiant le 2026-10-28 |
+| **Étape 8** | API de consultation REST & Documentation OpenAPI / Swagger | **Validé** | 2026-10-29 | Latest, résumé, anomalies, HTTP réel et Swagger vérifiés ; tests OpenAPI passés ; validation explicite de l'étudiant le 2026-10-29, limites dans docs/api.md |
+| **Étape 9** | Analytics & Détection d'anomalies (Descriptif, seuils) | **Validé** | 2026-10-29 | 89 tests réussis, scénario E2E et correction énergie à minuit UTC vérifiés ; validation explicite de l'étudiant le 2026-10-29, détails docs/analytics.md |
+| **Étape 10**| Conteneurisation Docker Compose & Persistance | **Validé** | 2026-10-29 | Profil simulation et persistance vérifiés ; validation explicite de l'étudiant le 2026-10-29 |
+| **Étape 11**| Observabilité & Supervision (Spring Boot Actuator, métriques) | **Validé** | 2026-10-29 | Actuator et métriques vérifiés ; validation explicite de l'étudiant le 2026-10-29 |
+| **Étape 12**| Sécurité & Durcissement (.env, validation entrées, profils) | **Validé** | 2026-10-29 | Audit ciblé, profils et protections vérifiés ; Storage 93 tests, Collector 18 ; validation explicite de l'étudiant le 2026-10-29, limites docs/security.md |
 
 ---
 
@@ -100,7 +100,22 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 - [x] Compte-rendu d'étape rédigé dans `/home/hents/Documents/code/techweb2/compte_rendu/etape_5/compte_rendu.md`.
 
 ---
-*Dernière mise à jour : 2026-10-26*
+*Dernière mise à jour : 2026-10-29*
+
+## Reprise des bases sur le nouveau PC — 2026-10-27
+
+**Reprise technique validée**, sans valider globalement les étapes métier ni démarrer les nouveaux endpoints de l'étape 8. Les sections historiques ci-dessous décrivent la machine précédente ; la configuration applicable à ce PC est le Compose actuel.
+
+- [x] Redis `7.4.12`, MongoDB `7.0.45`, Cassandra `4.1.12` healthy dans Docker `default`, ports hôte sur `127.0.0.1` et volumes persistants distincts.
+- [x] Initialiseur CQL `Exited (0)`, deux rejeux idempotents et trois valeurs exactes conservées après redémarrage (preuve Task 2 reprise dans le rapport permanent).
+- [x] Cache Maven rempli en ligne ; suites Collector 16/16 et Storage 69/69, sans échec, erreur ou test ignoré. Aucun code Java modifié.
+- [x] Collector `8081` et Storage `8083` lancés sur l'hôte ; capteur `task3-20261027T130350Z-dc21d26c` créé en `201`, mesure `4 kW` acceptée en `202`, Redis `pending=0`, `lag=0`, ligne Cassandra et résumé MongoDB (`count=1`, `energyKwh=0.066667`, `anomalyCount=1`).
+- [x] Historique et résumé HTTP `200` ; mesure invalide HTTP `400` sans nouvelle entrée Redis (`XLEN=1` avant/après), plage inversée HTTP `400`.
+- [x] Les deux processus Spring Boot lancés pour le contrôle ont été arrêtés par Ctrl+C ; les bases restent actives. Un message Redis `Connection closed` est apparu pendant l'arrêt de Storage, dont Maven termine avec le code 0 ; réserve consignée.
+- [x] Rapport reproductible : [reprise sur le nouveau PC](../compte_rendu/etape_8/reprise_nouveau_pc_bases.md).
+- [x] Contrôle final du 2026-10-28 : trois bases healthy, script de vérification code 0 ; suites relancées hors bac à sable, Collector 16/16 et Storage 69/69, 0 échec, 0 erreur, 0 ignoré (détails dans `docs/tests.md`).
+- [x] Nouveaux endpoints de consultation, Swagger UI et calculs descriptifs de l'étape 8 ajoutés et contrôlés le 2026-10-29.
+- [x] Validation explicite de l'étudiant pour les étapes 3, 4, 5 et 7, et demande de poursuivre les étapes 6 et 8 le 2026-10-28.
 
 ## Étape 7 — travail en cours au 2026-10-27
 
@@ -115,9 +130,9 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 - [x] Suite Collector : 16/16 tests, 0 échec, 0 erreur, 0 ignoré (`mvn -o -q test`).
 - [x] Scénario réel Collector → Redis → Storage → Cassandra + MongoDB exécuté et documenté.
 - [x] Compte rendu de l'étape 7 remis sous `/home/hents/Documents/code/techweb2/compte_rendu/etape_7/`.
-- [ ] Validation explicite de l'étape par l'étudiant avant l'étape 8.
+- [x] Validation explicite de l'étape par l'étudiant le 2026-10-28.
 
-Le travail est lancé à la demande de l'étudiant ; les essais réels documentés dans le compte rendu ont passé et le rapport a été remis au chemin externe. L'étape reste **En cours** jusqu'à validation explicite de l'étudiant.
+Les essais réels documentés dans le compte rendu ont passé et l'étudiant a validé explicitement l'étape le 2026-10-28.
 
 ## Étape 6 — état au 2026-10-26
 
@@ -131,9 +146,9 @@ Le travail est lancé à la demande de l'étudiant ; les essais réels document�
 - [x] Métadonnées et résumé conservés après redémarrage du conteneur MongoDB.
 - [x] Codes HTTP réels : `201`, `200`, `400`, `404`, `409` ; aucun document créé pour `sensor/001`.
 - [x] Index unique `(sensorId, date)` présent ; `refresh=true` conserve un seul document de résumé.
-- [ ] Définir la persistance des rapports métier demandée par le skill du projet ; aucun modèle de rapport n'est encore présent.
+- [x] Rapports métier quotidiens dans `reports`, route daily-report, tests service/API et preuve MongoDB le 2026-10-29.
 
-L'image `mongo:7.0-jammy` est installée dans Docker `default` et `smartenergy-mongo` fonctionne avec un volume nommé. Les preuves techniques de l'API et des agrégats sont réalisées ; la persistance des rapports métier et la validation de l'étudiant restent ouvertes. L'étudiant a demandé explicitement de commencer l'étape 7 malgré cette réserve documentée.
+L'image `mongo:7.0-jammy` fonctionne avec un volume nommé. Le complément du 2026-10-29 ajoute la persistance des rapports métier ; le compte rendu est dans `compte_rendu/etape_6/complement_rapports_2026-10-29.md`. L'étudiant a validé explicitement les étapes 6 et 8 le 2026-10-29, avec les limites documentées.
 
 ## Reprise de l'étape 5 — 2026-10-26
 
@@ -144,4 +159,4 @@ L'image `mongo:7.0-jammy` est installée dans Docker `default` et `smartenergy-m
 - [x] Écriture puis lecture d'une mesure de contrôle : `stage5-check-20261026`, `2026-10-26T12:00:00Z`, `4.25 kW`, `230 V`, `22.5 °C` ; une ligne retournée.
 - [x] 9 tests ciblés Cassandra réussis (`mvn -o -q -Dtest=CassandraMeasurementServiceTest,MeasurementEntityMappingTest test`).
 - [x] Événement Redis `1793032568198-0` consommé, acquitté (`XPENDING=0`), écrit dans la nouvelle Cassandra et relu via HTTP (`stage5stream20261026`, `5.5 kW`).
-- [ ] Validation de l'étape par l'étudiant.
+- [x] Validation de l'étape par l'étudiant le 2026-10-28.

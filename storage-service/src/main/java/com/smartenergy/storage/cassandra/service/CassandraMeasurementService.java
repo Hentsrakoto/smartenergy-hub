@@ -86,6 +86,9 @@ public class CassandraMeasurementService {
         if (from.isAfter(to)) {
             throw new IllegalArgumentException("'from' doit être antérieur ou égal à 'to'");
         }
+        if (java.time.Duration.between(from, to).compareTo(java.time.Duration.ofDays(31)) > 0) {
+            throw new IllegalArgumentException("La plage ne doit pas dépasser 31 jours");
+        }
 
         LocalDate dayFrom = from.atZone(ZoneOffset.UTC).toLocalDate();
         LocalDate dayTo   = to.atZone(ZoneOffset.UTC).toLocalDate();

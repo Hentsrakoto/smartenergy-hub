@@ -20,8 +20,8 @@ Conformément aux règles de conception du projet :
   - **Storage & Analytics Service** (Spring Boot 3.x, Java 17)
   - **Dashboard Streamlit** (Python 3.12)
 - **Dans des conteneurs Docker** :
-  - **Apache Cassandra** : nouvelle instance isolée `smartenergy-cassandra` (`cassandra:4.0`, version 4.0.21), sur le contexte Docker `default`, avec un volume nommé distinct et le port hôte `127.0.0.1:9042`. L'ancien conteneur `cassandra` et son volume restent conservés.
-  - **Redis Streams** : Conteneur dédié `smartenergy-redis` (`redis:7-alpine`). Pour éviter le conflit avec le conteneur tiers `tsidika-redis` écoutant sur 6379, publication sur le port hôte **6380** (interne 6379).
+  - **Apache Cassandra** : service Compose `smartenergy-cassandra` (`cassandra:4.1`, version 4.1.12 vérifiée sur ce PC), volume `smartenergy_cassandra_data` et port hôte `127.0.0.1:9042`. L'initialiseur Compose applique le CQL idempotent.
+  - **Redis Streams** : Conteneur dédié `smartenergy-redis` (`redis:7.4-alpine`). Pour éviter le conflit avec le conteneur tiers `tsidika-redis` écoutant sur 6379, publication sur **127.0.0.1:6380** (interne 6379).
   - **MongoDB** : conteneur `smartenergy-mongo` (`mongo:7.0-jammy`), volume `smartenergy_mongo_data`, port hôte **127.0.0.1:27017**.
   - **Simulateur de capteurs** : Conteneurisé ou script exécutable selon la phase de test.
 
@@ -42,7 +42,7 @@ flowchart LR
 
     subgraph Storage["Traitement & Stockage"]
         StorageSvc["Storage Service\n(Spring Boot - Port 8083)"]
-        Cassandra[("Cassandra (Docker existant)\nPort 9042\nSéries temporelles")]
+        Cassandra[("Cassandra 4.1 (Docker)\nPort 9042\nSéries temporelles")]
         Mongo[("MongoDB (Docker)\nPort 27017\nMétadonnées & Agrégats")]
     end
 
@@ -76,7 +76,7 @@ flowchart LR
 | **Collector Service** | Spring Boot 3 (Java 17) | Point d'entrée HTTP, validation du contrat de données (`MeasurementDto`), publication immédiate dans Redis Streams. | Isole l'ingestion du stockage lourd. Répond en `202 Accepted` pour garantir des temps de réponse sous 5 ms même sous fort trafic. |
 | **Redis Streams** | Redis 7 | Tampon de messages durable et ordonné, organisé en Consumer Groups. | Découplage strict producteur/consommateur, rétention configurable, reprise après panne via `PEL` (Pending Entries List) et `XACK`. |
 | **Storage Service** | Spring Boot 3 (Java 17) | Consommation du stream, transformation, écriture parallèle dans Cassandra et MongoDB, acquittement. | Garantit l'idempotence des écritures et la cohérence éventuelle sans impacter le temps de réponse de l'ingestion. |
-| **Cassandra** | Apache Cassandra 4.0 | Stockage volumétrique des télémesures brutes horodatées. | Écritures ultra-rapides sans verrou, requêtes optimisées par `(sensor_id, day)` pour extraire des plages de dates sans balayage global. |
+| **Cassandra** | Apache Cassandra 4.1 | Stockage volumétrique des télémesures brutes horodatées. | Écritures ultra-rapides sans verrou, requêtes optimisées par `(sensor_id, day)` pour extraire des plages de dates sans balayage global. |
 | **MongoDB** | MongoDB 7.0 | Référentiel des capteurs, localisations, seuils d'alerte, résumés journaliers pré-agrégés. | Modèle de document flexible adapté aux métadonnées hétérogènes et aux requêtes d'agrégation multidimensionnelles. |
 | **Analytics Service** | Spring Boot / Python | Calculs de statistiques descriptives (min, max, kWh), détection d'anomalies et modèles IA prédictifs. | Fournit une valeur métier exploitable à partir des données brutes stockées. |
 | **Dashboard** | Streamlit | Interface utilisateur web interactive. | Visualisation rapide des courbes de puissance, des alertes et de la santé du parc de capteurs. |
@@ -90,9 +90,9 @@ flowchart LR
 | **Collector Service** | Hôte | **8081** | 8081 | Disponible (vérifié par `ss -tulpn`) |
 | **Storage Service** | Hôte | **8083** | 8083 | Disponible (8082 évité car pris par `union-onlyoffice`) |
 | **Dashboard Streamlit** | Hôte | **8501** | 8501 | Disponible |
-| **Cassandra** | Docker `default` (`smartenergy-cassandra`) | **127.0.0.1:9042** | 9042 | `UN`, écriture et lecture CQL vérifiées le 2026-10-26 |
-| **Redis Streams** | Docker (`smartenergy-redis`) | **6380** | 6379 | 6380 libre (6379 utilisé par `tsidika-redis`) |
-| **MongoDB** | Docker `default` (`smartenergy-mongo`) | **127.0.0.1:27017** | 27017 | `healthy` ; API et persistance après redémarrage vérifiées le 2026-10-26 |
+| **Cassandra** | Docker `default` (`smartenergy-cassandra`) | **127.0.0.1:9042** | 9042 | `healthy`, nœud `UN` et persistance après redémarrage vérifiés le 2026-10-27 |
+| **Redis Streams** | Docker (`smartenergy-redis`) | **127.0.0.1:6380** | 6379 | `healthy`, 6379 réservé à `tsidika-redis` |
+| **MongoDB** | Docker `default` (`smartenergy-mongo`) | **127.0.0.1:27017** | 27017 | `healthy`, persistance après redémarrage vérifiée le 2026-10-27 |
 
 ---
 
@@ -173,7 +173,7 @@ spring:
     schema-action: none
 ```
 
-- Cassandra utilise désormais **`smartenergy-cassandra`** dans le contexte Docker `default` (image `cassandra:4.0`, version 4.0.21 ; port hôte `127.0.0.1:9042`). L'ancien `cassandra` est conservé et arrêté.
+- Cassandra utilise **`smartenergy-cassandra`** dans le contexte Docker `default` (image `cassandra:4.1`, version 4.1.12 vérifiée ; port hôte `127.0.0.1:9042`). Aucun ancien conteneur Cassandra n'existait sur ce PC avant la reprise.
 - Le keyspace et la table doivent être initialisés avant le démarrage du Storage Service.
 - `schema-action: none` interdit à Spring de modifier le schéma : les scripts CQL
   restent la seule source de vérité.
@@ -181,15 +181,13 @@ spring:
 ### 7.4 Initialisation et vérification
 
 ```bash
-# Vérifier que Cassandra est démarré (sans recréer le conteneur)
-docker --context default start smartenergy-cassandra
-docker --context default exec smartenergy-cassandra nodetool status
+# Démarrer les bases et attendre l'initialisation CQL
+docker compose up -d
+docker compose ps -a
+scripts/verify_databases.sh
 
-# Créer le keyspace et la table si nécessaire (idempotent, aucun DROP)
-docker --context default exec -i smartenergy-cassandra cqlsh < scripts/init_cassandra.cql
-
-# Vérifier le schéma
-docker --context default exec smartenergy-cassandra cqlsh -e "DESCRIBE TABLE smartenergy.measurements_by_sensor_day;"
+# Vérifier directement le schéma
+docker compose exec -T smartenergy-cassandra cqlsh -e "DESCRIBE TABLE smartenergy.measurements_by_sensor_day;"
 ```
 
 ## 8. Modèle MongoDB (étape 6)
