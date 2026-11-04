@@ -34,6 +34,12 @@ public class ApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    @ExceptionHandler(com.smartenergy.storage.client.AnalyticsHttpException.class)
+    public ResponseEntity<?> handleAnalytics(com.smartenergy.storage.client.AnalyticsHttpException ex, HttpServletRequest request) {
+        if (ex.body() != null) return ResponseEntity.status(ex.status()).body(ex.body());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "Service Analytics indisponible", request, null);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException ex,

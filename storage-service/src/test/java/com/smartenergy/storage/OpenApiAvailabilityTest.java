@@ -6,6 +6,11 @@ import com.smartenergy.storage.controller.SensorController;
 import com.smartenergy.storage.mongo.service.DailySummaryService;
 import com.smartenergy.storage.mongo.service.SensorService;
 import com.smartenergy.storage.service.LatestMeasurementService;
+import com.smartenergy.storage.config.OpenApiExamples;
+import com.smartenergy.storage.controller.AnalyticsController;
+import com.smartenergy.storage.controller.DailyReportController;
+import com.smartenergy.storage.service.AnalyticsService;
+import com.smartenergy.storage.mongo.service.DailyReportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -38,7 +43,8 @@ class OpenApiAvailabilityTest {
             MongoDataAutoConfiguration.class, MongoRepositoriesAutoConfiguration.class,
             RedisAutoConfiguration.class
     })
-    @Import({SensorController.class, MeasurementHistoryController.class})
+    @Import({SensorController.class, MeasurementHistoryController.class, AnalyticsController.class,
+            DailyReportController.class, OpenApiExamples.class})
     static class TestApplication {
     }
 
@@ -47,6 +53,20 @@ class OpenApiAvailabilityTest {
     @MockBean DailySummaryService dailySummaryService;
     @MockBean CassandraMeasurementService cassandraService;
     @MockBean LatestMeasurementService latestMeasurementService;
+    @MockBean AnalyticsService analyticsService;
+    @MockBean DailyReportService dailyReportService;
+
+    @Test
+    void documentsConcreteRequestsResultsAndErrors() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/sensors'].post.requestBody.content['application/json'].examples.cours.value.maxPowerKw").value(5))
+                .andExpect(jsonPath("$.paths['/api/sensors'].post.responses['201'].content['*/*'].examples.cours.value.sensorId").value("sensor-demo"))
+                .andExpect(jsonPath("$.paths['/api/analytics/{sensorId}/summary'].get.responses['200'].content['*/*'].examples.cours.value.energyKwh").value(0.166667))
+                .andExpect(jsonPath("$.paths['/api/analytics/{sensorId}/anomalies'].get.responses['200'].content['*/*'].examples.cours.value[0].reasons[0]").value("POWER_ABOVE_MAX"))
+                .andExpect(jsonPath("$.paths['/api/sensors/{id}/daily-report'].get.responses['200'].content['*/*'].examples.cours.value.status").value("ALERT"))
+                .andExpect(jsonPath("$.paths['/api/sensors'].post.responses['409'].content['application/json'].examples.cours.value.status").value(409));
+    }
 
     @Test
     void publishesStorageContract() throws Exception {

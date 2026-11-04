@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+management:
+  server:
+    port: 9080
+    address: 0.0.0.0
+spring:
+  data:
+    redis:
+      host: smartenergy-redis
+      port: 6379
+    mongodb:
+      uri: mongodb://smartenergy-mongo:27017/${MONGO_DATABASE:smartenergy}
+  cassandra:
+    contact-points: smartenergy-cassandra
+    port: 9042
+smartenergy:
+  analytics:
+    url: http://analytics-service:8080
+  diagnostics:
+    enabled: false

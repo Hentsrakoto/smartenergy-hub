@@ -41,4 +41,30 @@ class AnalyticsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
+    @Test
+    void analyticsFailureReturnsExplicitSanitized503() throws Exception {
+        var from=Instant.parse("2026-10-28T00:00:00Z");
+        when(service.summarize("sensor-001", from, from))
+                .thenThrow(new com.smartenergy.storage.client.AnalyticsHttpException(503, null));
+        mvc.perform(get("/api/analytics/sensor-001/summary")
+                .param("from", from.toString()).param("to", from.toString()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value("Service Analytics indisponible"));
+    }
+
+    @Test
+    void analyticsClientErrorsKeepUpstreamStatusAndJson() throws Exception {
+        var from=Instant.parse("2026-10-28T00:00:00Z");
+        for (int statusCode : new int[]{400,404}) {
+            var body=new com.fasterxml.jackson.databind.ObjectMapper().readTree("{\"code\":\"UPSTREAM\",\"message\":\"Erreur métier\"}");
+            org.mockito.Mockito.doThrow(new com.smartenergy.storage.client.AnalyticsHttpException(statusCode, body))
+                    .when(service).summarize("sensor-001", from, from);
+            mvc.perform(get("/api/analytics/sensor-001/summary")
+                    .param("from", from.toString()).param("to", from.toString()))
+                    .andExpect(status().is(statusCode))
+                    .andExpect(jsonPath("$.code").value("UPSTREAM"))
+                    .andExpect(jsonPath("$.message").value("Erreur métier"));
+        }
+    }
+
 }

@@ -1,0 +1,144 @@
+{
+  "collector": {
+    "openApi": 200,
+    "paths": [
+      "/api/measurements"
+    ],
+    "managementHiddenOnPublicPort": true
+  },
+  "storage": {
+    "openApi": 200,
+    "paths": [
+      "/api/analytics/{sensorId}/anomalies",
+      "/api/analytics/{sensorId}/summary",
+      "/api/measurements/{sensorId}/day/{day}",
+      "/api/measurements/{sensorId}/history",
+      "/api/measurements/{sensorId}/latest",
+      "/api/sensors",
+      "/api/sensors/{id}",
+      "/api/sensors/{id}/daily-report",
+      "/api/sensors/{id}/daily-summary"
+    ],
+    "managementHiddenOnPublicPort": true,
+    "compatibilityDeprecated": true
+  },
+  "analytics": {
+    "openApi": 200,
+    "paths": [
+      "/api/analytics/{sensorId}/anomalies",
+      "/api/analytics/{sensorId}/summary",
+      "/api/sensors/{id}/daily-report",
+      "/api/sensors/{id}/daily-summary",
+      "/internal/sensors/{id}/daily-summary"
+    ],
+    "managementHiddenOnPublicPort": true
+  },
+  "legacyAnomaliesMatch": true,
+  "invalidRangesRejected": true,
+  "containers": [
+    {
+      "name": "/smartenergy-collector",
+      "image": "sha256:0cb63792add0c9cedf8a72d20985e12a05aff5e6dceef894f0d132a4f049e866",
+      "user": "10001:10001",
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8081"
+          }
+        ]
+      },
+      "health": "healthy"
+    },
+    {
+      "name": "/smartenergy-storage",
+      "image": "sha256:77c27dd31f71013a6ec8d93a1f18b039c456a1f200a29c91f2f019146a8de1e3",
+      "user": "10001:10001",
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8083"
+          }
+        ]
+      },
+      "health": "healthy"
+    },
+    {
+      "name": "/smartenergy-analytics",
+      "image": "sha256:f50de25dd8956348b2e4eeba04881b0560e2b3a0c88d42b934b16b17904524b3",
+      "user": "10001:10001",
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8084"
+          }
+        ]
+      },
+      "health": "healthy"
+    },
+    {
+      "name": "/smartenergy-dashboard",
+      "image": "sha256:637a3e263c637077e106cf25c6113d330f9fee5fda749ef7c59344ea6f521ccd",
+      "user": "10001:10001",
+      "ports": {
+        "8501/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8501"
+          }
+        ]
+      },
+      "health": "healthy"
+    }
+  ],
+  "internalMonitoring": {
+    "http://collector-service:9080/actuator/health": {
+      "status": "UP"
+    },
+    "http://storage-service:9080/actuator/health": {
+      "status": "UP"
+    },
+    "http://analytics-service:9080/actuator/health": {
+      "status": "UP"
+    },
+    "http://storage-service:9080/actuator/metrics/smartenergy.storage.persistence": {
+      "name": "smartenergy.storage.persistence",
+      "baseUnit": "seconds",
+      "measurements": [
+        {
+          "statistic": "COUNT",
+          "value": 0.0
+        },
+        {
+          "statistic": "TOTAL_TIME",
+          "value": 0.0
+        },
+        {
+          "statistic": "MAX",
+          "value": 0.0
+        }
+      ],
+      "availableTags": [
+        {
+          "tag": "outcome",
+          "values": [
+            "error",
+            "success"
+          ]
+        }
+      ]
+    },
+    "http://storage-service:9080/actuator/metrics/smartenergy.redis.pending": {
+      "name": "smartenergy.redis.pending",
+      "measurements": [
+        {
+          "statistic": "VALUE",
+          "value": 0.0
+        }
+      ],
+      "availableTags": []
+    }
+  }
+}

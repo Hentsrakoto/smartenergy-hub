@@ -1,0 +1,10 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["dashboard"],
+  "locale": "fr-FR",
+  "canonicalMap": "DESIGN.md",
+  "requiredCapabilities": ["Select/Listbox", "Date", "Scrollbar"],
+  "ownership": {"Select/Listbox": "authored", "Date": "authored"},
+  "requiredCommands": ["unit"],
+  "commands": {"unit": ".venv/bin/python -m unittest dashboard.test_client dashboard.test_app -q"}
+}

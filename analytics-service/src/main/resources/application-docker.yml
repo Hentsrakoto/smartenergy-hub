@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+management:
+  server:
+    port: 9080
+    address: 0.0.0.0
+spring:
+  data:
+    mongodb:
+      uri: mongodb://smartenergy-mongo:27017/${MONGO_DATABASE:smartenergy}
+  cassandra:
+    contact-points: smartenergy-cassandra
+    port: 9042
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

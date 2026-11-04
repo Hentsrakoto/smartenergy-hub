@@ -1,0 +1,86 @@
+{
+  "startedAt": "2026-11-04T14:13:25.560592+00:00",
+  "checks": {
+    "applicationsHealthy": true,
+    "existingDataPreserved": true,
+    "acceptedPersistedAndAcknowledged": true,
+    "invalidDoesNotPublish": true,
+    "analyticsOutageRetainsPending": true,
+    "recoveryWithoutDataLoss": true,
+    "duplicateDoesNotDoubleCount": true,
+    "summaryCompatibility": true
+  },
+  "databaseIdentityBefore": {
+    "/smartenergy-cassandra": {
+      "id": "ef76e8d5f4c4068e6d3484e94b5ea6fb09de4aaddd4d42c0fb5438cc6dd930f0",
+      "mounts": [
+        [
+          "smartenergy_cassandra_data",
+          "/var/lib/cassandra"
+        ]
+      ]
+    },
+    "/smartenergy-mongo": {
+      "id": "ebbc8a9dc11112cec16765a6249a6b76243ec6a6b56e04e438c6a473a301ce68",
+      "mounts": [
+        [
+          "562c77efafe6df30581b50606642b3f2c6018321b346c755afa3d88544010ba3",
+          "/data/configdb"
+        ],
+        [
+          "smartenergy_mongo_data",
+          "/data/db"
+        ]
+      ]
+    },
+    "/smartenergy-redis": {
+      "id": "9c54de5540b7a4b940d8482f179362bb68e6dd9509fbd8d4dc8f8bb5355fad46",
+      "mounts": [
+        [
+          "smartenergy_redis_data",
+          "/data"
+        ]
+      ]
+    }
+  },
+  "existingSensor002": [
+    200,
+    {
+      "sensorId": "sensor-002",
+      "from": "2026-11-01T00:00:00Z",
+      "to": "2026-11-01T23:59:59.999999Z",
+      "measurementCount": 4,
+      "minPowerKw": 54.883,
+      "avgPowerKw": 122.495,
+      "maxPowerKw": 189.486,
+      "energyKwh": 0.272211,
+      "anomalyCount": 2
+    }
+  ],
+  "sensorId": "migration-f594c1072388",
+  "firstSummary": {
+    "sensorId": "migration-f594c1072388",
+    "date": "2026-11-03",
+    "avgPowerKw": 4.0,
+    "maxPowerKw": 4.0,
+    "energyKwh": 0.011111,
+    "anomalyCount": 0,
+    "measurementCount": 1,
+    "minPowerKw": 4.0,
+    "updatedAt": "2026-11-04T14:13:30.041Z"
+  },
+  "pendingDuringOutage": 1,
+  "compatibilityDuringOutage": 503,
+  "recoveredSummary": {
+    "sensorId": "migration-f594c1072388",
+    "date": "2026-11-03",
+    "avgPowerKw": 6.5,
+    "maxPowerKw": 9.0,
+    "energyKwh": 0.091667,
+    "anomalyCount": 1,
+    "measurementCount": 2,
+    "minPowerKw": 4.0,
+    "updatedAt": "2026-11-04T14:13:57.042Z"
+  },
+  "finishedAt": "2026-11-04T14:13:57.820609+00:00"
+}

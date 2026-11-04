@@ -30,13 +30,14 @@ public class DailyReportController {
         this.reports = reports;
     }
 
-    @Operation(summary = "Lire ou créer un instantané quotidien immuable à partir du résumé MongoDB")
+    @Operation(deprecated = true, summary = "Lire ou créer un instantané quotidien immuable à partir du résumé MongoDB")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Succès"),
         @ApiResponse(responseCode = "400", description = "Paramètres ou corps invalides", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Capteur ou mesures absents", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
         @ApiResponse(responseCode = "500", description = "Erreur de stockage", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "Service Analytics indisponible")
     @GetMapping("/{id}/daily-report")
     public ResponseEntity<DailyReportResponse> dailyReport(
             @Parameter(description = "Identifiant du capteur", example = "SENSOR-001") @PathVariable String id,

@@ -1,5 +1,48 @@
 # Tests et preuves
 
+## Migration Docker et Analytics — 2026-11-04
+
+Suites réellement exécutées : **18 tests Collector, 100 Storage, 30 Analytics,
+17 dashboard et 3 scripts**, sans échec, erreur ou test ignoré. Les corrections
+couvrent notamment les erreurs JSON amont, la création concurrente des rapports
+et leur précision de date MongoDB.
+
+Le [scénario Docker complet](../compte_rendu/migration-docker-analytics/verification.json)
+termine avec success=true : mesure valide/invalide, panne Analytics avec message
+en PEL, reprise, idempotence, capteur inconnu, redémarrage des applications et
+identité inchangée des bases/volumes. Les [contrats réels](../compte_rendu/migration-docker-analytics/runtime-contracts.json)
+vérifient Swagger, erreurs400, compatibilité des anomalies, utilisateurs10001
+et supervision interne. Les commandes et incidents sont dans le
+[rapport de migration](../compte_rendu/migration-docker-analytics/rapport.md).
+
+Les sections suivantes gardent leurs dates et décrivent les versions antérieures.
+
+## Extension front Streamlit — 2026-11-01
+
+`.venv/bin/python -m unittest dashboard.test_client dashboard.test_app -q` :
+15 tests réussis (8 client, 7 interface), aucun échec ou erreur. `pip check` ne
+détecte aucune dépendance incohérente. Compilation Python et `git diff --check`
+réussis. Les scénarios AppTest utilisent des réponses API simulées.
+
+Lecture réelle distincte : Storage renvoie 12 capteurs ; sensor-002 au 1er novembre
+compte 4 mesures et 2 anomalies, affichées dans le navigateur. Sélection au clavier,
+calendrier et onglets vérifiés, rendu inspecté à 375 px. Les limites d'accessibilité
+et les commandes figurent dans le [compte rendu](../compte_rendu/extensions/front.md).
+Les suites Java n'ont pas été relancées pour cette extension Python.
+
+## Réorganisation documentaire — 2026-11-01
+
+Le parcours destiné à l'évaluation est regroupé dans [`doc/`](../doc/README.md), avec un chapitre par étape et un rapport de synthèse. Les nouveaux liens locaux, la navigation et la fermeture des blocs de code ont été contrôlés. Les chiffres ont été comparés aux preuves conservées. Aucun test applicatif ou scénario Docker n'a été relancé pour cette révision de prose ; les résultats ci-dessous gardent leurs dates et leur périmètre.
+
+## Compléments du projet de cours — 2026-11-01
+
+- Préparation : cinq capteurs créés, second passage sans écrasement et configurations concordantes ; deux tests HTTP/configuration passent.
+- Statistiques de mesure : un test de conversion ms et quantiles passe. Total : trois tests Python de scripts.
+- Swagger : test Storage ajouté, initialement rouge, puis suite complète verte (94 tests). Collector : exemple 400 initialement absent détecté par le test, puis 18 tests passent. Contrats réels consultés après redémarrage et exemples vérifiés par jq.
+- Simulation courte : 20 réponses 202, deux pics injectés sur sensor-002 ; résumé count=4/anomalyCount=2 et liste des deux anomalies vérifiés.
+- Performances : deux relevés conservés dans `docs/performance/`, second sans suites Maven concurrentes. 30 puis 300 mesures retrouvées, dix lectures par volume ; erreurs de persistance=0, pending/lag revenus à 0. Méthode, chiffres et limites dans `docs/performance.md`.
+- Les données précédentes et les nouveaux identifiants de preuve sont conservés. Aucun reset de base ou migration de schéma.
+
 ## Étape 12 — 2026-10-29
 
 Deux tests initialement rouges (diagnostics exposés par défaut et plage >31 jours acceptée), puis correction et suites complètes : Storage **93 tests**, Collector **18 tests**, zéro échec/erreur. Avec les deux applications en profil demo, `python3 scripts/verify_security.py` code 0 : Swagger et diagnostics 404, Actuator sensible non exposé, santé UP, validation et période excessive 400. `ss` confirme les quatre sockets loopback. Recherche ciblée de signatures de secrets dans les deux commits accessibles et le répertoire : aucune correspondance ; limite de ce contrôle documentée dans `docs/security.md`.

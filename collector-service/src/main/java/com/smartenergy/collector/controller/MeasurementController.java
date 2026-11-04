@@ -40,8 +40,16 @@ public class MeasurementController {
                     examples = @ExampleObject(value = "{\"sensorId\":\"SENSOR-001\",\"timestamp\":\"2026-10-22T12:00:00Z\",\"powerKw\":2.5,\"voltage\":230,\"temperature\":25}"))))
     @ApiResponses({
         @ApiResponse(responseCode = "202", description = "Événement accepté pour traitement asynchrone", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Mesure invalide ou JSON illisible", content = @Content(schema = @Schema(implementation = ValidationErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Publication Redis échouée", content = @Content)
+        @ApiResponse(responseCode = "400", description = "Mesure invalide ou JSON illisible", content = @Content(
+                mediaType = "application/json", schema = @Schema(implementation = ValidationErrorResponse.class),
+                examples = @ExampleObject(name = "validation", value = """
+                        {"status":400,"error":"Bad Request","message":"Échec de validation des données de mesure",
+                         "timestamp":"2026-11-01T00:00:00Z","fieldErrors":{"sensorId":"L'identifiant du capteur (sensorId) est obligatoire"}}
+                        """))),
+        @ApiResponse(responseCode = "500", description = "Publication Redis échouée", content = @Content(
+                mediaType = "application/json", examples = @ExampleObject(name = "indisponible", value = """
+                        {"timestamp":"2026-11-01T00:00:00Z","status":500,"error":"Internal Server Error","path":"/api/measurements"}
+                        """)))
     })
     @PostMapping
     public ResponseEntity<Void> receiveMeasurement(@Valid @RequestBody EnergyMeasurementRequest request) {

@@ -36,7 +36,7 @@ spring:
     contact-points: ${CASSANDRA_HOST:localhost}
     port: ${CASSANDRA_PORT:9042}
     local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}
-    # Le schéma est géré explicitement par scripts/init_cassandra.cql (idempotent).
+    # Le schéma est géré explicitement par scripts/init-cassandra.cql (idempotent).
     # Spring ne doit donc jamais créer, modifier ou supprimer des tables.
     schema-action: none
     request:
@@ -49,6 +49,8 @@ spring:
       write-dates-as-timestamps: false
 
 smartenergy:
+  analytics:
+    url: ${ANALYTICS_URL:http://127.0.0.1:8084}
   stream:
     name: ${REDIS_STREAM_NAME:energy-measurements}
     group: ${REDIS_STREAM_GROUP:storage-group}

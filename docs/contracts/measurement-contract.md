@@ -7,7 +7,7 @@ Ce document spécifie le contrat de données (Data Contract) d'ingestion pour le
 ## 1. Schéma et DTO d'Ingestion
 
 Le contrat d'échange principal est matérialisé côté Java par le record :
-[`com.smartenergy.collector.dto.EnergyMeasurementRequest`](file:///home/hents/Documents/code/techweb2/smartenergy-hub/collector-service/src/main/java/com/smartenergy/collector/dto/EnergyMeasurementRequest.java)
+[`com.smartenergy.collector.dto.EnergyMeasurementRequest`](../../collector-service/src/main/java/com/smartenergy/collector/dto/EnergyMeasurementRequest.java)
 
 ### 1.1 Définition des champs et contraintes
 

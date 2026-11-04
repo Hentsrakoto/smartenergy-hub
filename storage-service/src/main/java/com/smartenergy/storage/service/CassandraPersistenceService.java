@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p><strong>Idempotence :</strong> Cassandra garantit nativement qu'une réinsertion
  * sur la même clé primaire {@code (sensor_id, day, measured_at)} écrase la ligne
- * sans créer de doublon. Le résumé MongoDB est recalculé depuis Cassandra et
+ * sans créer de doublon. Analytics recalcule le résumé MongoDB depuis Cassandra et
  * enregistré sous un identifiant stable ; rejouer un événement ne double donc
  * pas ses statistiques.</p>
  */
@@ -89,6 +89,8 @@ public class CassandraPersistenceService implements MeasurementPersistenceServic
                 dailySummaryService.computeAndStore(event.sensorId(), day);
             } catch (SensorNotFoundException exception) {
                 // Le Collector accepte les mesures sans métadonnées préalables.
+                // Seul le 404 Analytics avec code top-level SENSOR_NOT_FOUND arrive ici.
+                // Tout autre échec remonte au listener et conserve le message dans la PEL.
                 // La série brute reste disponible pour ce capteur non enregistré.
                 log.info("Résumé ignoré pour le capteur non enregistré '{}': {}", event.sensorId(), exception.getMessage());
             }

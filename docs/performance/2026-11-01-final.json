@@ -1,0 +1,113 @@
+{
+  "run": "perf-105a348a2b16",
+  "executedAt": "2026-11-01T14:06:59.636065+00:00",
+  "environment": {
+    "os": "Linux",
+    "kernel": "7.0.0-42-generic",
+    "python": "3.12.3",
+    "logical_cpus": 4
+  },
+  "method": "Une exécution locale, petits puis grands volumes ; nouvelles connexions HTTP, lectures échauffées ; aucune garantie de SLA.",
+  "phases": [
+    {
+      "sensorId": "perf-105a348a2b16-small",
+      "measurements": 30,
+      "workers": 1,
+      "accepted": 30,
+      "stored": 30,
+      "ingestion": {
+        "samples": 30,
+        "mean_ms": 16.361,
+        "p50_ms": 12.068,
+        "p95_ms": 21.476,
+        "max_ms": 127.029
+      },
+      "accepted_per_second": 60.039,
+      "ingestion_wall_seconds": 0.5,
+      "completion_wall_seconds": 1.601,
+      "history_via_http": {
+        "samples": 10,
+        "mean_ms": 11.509,
+        "p50_ms": 10.437,
+        "p95_ms": 17.628,
+        "max_ms": 17.628
+      },
+      "metrics_before": {
+        "smartenergy.storage.persistence": {
+          "COUNT": 0.0,
+          "TOTAL_TIME": 0.0,
+          "MAX": 0.0
+        },
+        "smartenergy.storage.persistence.errors": {
+          "COUNT": 0.0
+        },
+        "smartenergy.redis.pending": {
+          "VALUE": 0.0
+        }
+      },
+      "metrics_after": {
+        "smartenergy.storage.persistence": {
+          "COUNT": 30.0,
+          "TOTAL_TIME": 0.84364495,
+          "MAX": 0.319949864
+        },
+        "smartenergy.storage.persistence.errors": {
+          "COUNT": 0.0
+        },
+        "smartenergy.redis.pending": {
+          "VALUE": 0.0
+        }
+      }
+    },
+    {
+      "sensorId": "perf-105a348a2b16-large",
+      "measurements": 300,
+      "workers": 6,
+      "accepted": 300,
+      "stored": 300,
+      "ingestion": {
+        "samples": 300,
+        "mean_ms": 28.599,
+        "p50_ms": 26.849,
+        "p95_ms": 50.248,
+        "max_ms": 82.793
+      },
+      "accepted_per_second": 206.978,
+      "ingestion_wall_seconds": 1.449,
+      "completion_wall_seconds": 8.207,
+      "history_via_http": {
+        "samples": 10,
+        "mean_ms": 29.532,
+        "p50_ms": 28.148,
+        "p95_ms": 39.928,
+        "max_ms": 39.928
+      },
+      "metrics_before": {
+        "smartenergy.storage.persistence": {
+          "COUNT": 30.0,
+          "TOTAL_TIME": 0.84364495,
+          "MAX": 0.319949864
+        },
+        "smartenergy.storage.persistence.errors": {
+          "COUNT": 0.0
+        },
+        "smartenergy.redis.pending": {
+          "VALUE": 0.0
+        }
+      },
+      "metrics_after": {
+        "smartenergy.storage.persistence": {
+          "COUNT": 335.0,
+          "TOTAL_TIME": 8.30721773,
+          "MAX": 0.319949864
+        },
+        "smartenergy.storage.persistence.errors": {
+          "COUNT": 0.0
+        },
+        "smartenergy.redis.pending": {
+          "VALUE": 6.0
+        }
+      }
+    }
+  ]
+}
