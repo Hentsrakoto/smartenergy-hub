@@ -50,8 +50,13 @@ public class MeasurementEntity {
     public MeasurementEntity() {
     }
 
-    public MeasurementEntity(String sensorId, LocalDate day, Instant measuredAt,
-                             double powerKw, double voltage, Double temperature) {
+    @com.fasterxml.jackson.annotation.JsonCreator
+    public MeasurementEntity(@JsonProperty("sensorId") String sensorId,
+                             @JsonProperty("day") LocalDate day,
+                             @JsonProperty("measuredAt") Instant measuredAt,
+                             @JsonProperty("powerKw") double powerKw,
+                             @JsonProperty("voltage") double voltage,
+                             @JsonProperty("temperature") Double temperature) {
         this.key = new MeasurementKey(sensorId, day, measuredAt);
         this.powerKw = powerKw;
         this.voltage = voltage;

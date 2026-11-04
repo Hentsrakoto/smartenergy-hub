@@ -36,6 +36,7 @@ class OpenApiAvailabilityTest {
                 .andExpect(jsonPath("$.openapi").isString())
                 .andExpect(jsonPath("$.paths['/api/measurements'].post.responses['202']").exists())
                 .andExpect(jsonPath("$.paths['/api/measurements'].post.responses['400']").exists())
+                .andExpect(jsonPath("$.paths['/api/measurements'].post.responses['400'].content['application/json'].examples.validation.value.status").value(400))
                 .andExpect(jsonPath("$.paths['/api/measurements'].post.responses['200']").doesNotExist());
     }
 

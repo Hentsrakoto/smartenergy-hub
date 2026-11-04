@@ -1,9 +1,9 @@
 # ==============================================================================
-# Docker Compose — Infrastructure Dépendances SmartEnergy Hub
+# Docker Compose — SmartEnergy Hub
 #
 # RÈGLES D'EXÉCUTION DU PROJET :
-# 1. Spring Boot (Collector, Storage) et Streamlit tournent SUR L'HÔTE (hors Docker).
-# 2. Ce fichier Compose gère les dépendances conteneurisées du projet :
+# 1. Depuis la migration validée le 2026-11-01, applications et bases sont dans Docker.
+# 2. Les conteneurs et volumes des bases existantes sont conservés :
 #    - Redis Streams (buffer de transport d'événements)
 #    - MongoDB (métadonnées, alertes, synthèses quotidiennes)
 #    - Cassandra (mesures temporelles) et son initialiseur CQL idempotent
@@ -11,23 +11,105 @@
 # ==============================================================================
 
 services:
+  collector-service:
+    build:
+      context: .
+      dockerfile: collector-service/Dockerfile
+    image: smartenergy-collector:local
+    container_name: smartenergy-collector
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      REDIS_STREAM_NAME: ${REDIS_STREAM_NAME:-energy-measurements}
+    ports:
+      - "127.0.0.1:${COLLECTOR_SERVER_PORT:-8081}:8080"
+    networks: [smartenergy-network]
+    depends_on:
+      smartenergy-redis:
+        condition: service_healthy
+    mem_limit: 512m
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: analytics-service/Dockerfile
+    image: smartenergy-analytics:local
+    container_name: smartenergy-analytics
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGO_DATABASE: ${MONGO_DATABASE:-smartenergy}
+      CASSANDRA_KEYSPACE: ${CASSANDRA_KEYSPACE:-smartenergy}
+      CASSANDRA_LOCAL_DATACENTER: ${CASSANDRA_LOCAL_DATACENTER:-datacenter1}
+    ports:
+      - "127.0.0.1:${ANALYTICS_SERVER_PORT:-8084}:8080"
+    networks: [smartenergy-network]
+    depends_on:
+      smartenergy-mongo:
+        condition: service_healthy
+      smartenergy-cassandra-init:
+        condition: service_completed_successfully
+    mem_limit: 768m
+    restart: unless-stopped
+
+  storage-service:
+    build:
+      context: .
+      dockerfile: storage-service/Dockerfile
+    image: smartenergy-storage:local
+    container_name: smartenergy-storage
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGO_DATABASE: ${MONGO_DATABASE:-smartenergy}
+      CASSANDRA_KEYSPACE: ${CASSANDRA_KEYSPACE:-smartenergy}
+      CASSANDRA_LOCAL_DATACENTER: ${CASSANDRA_LOCAL_DATACENTER:-datacenter1}
+      REDIS_STREAM_NAME: ${REDIS_STREAM_NAME:-energy-measurements}
+      REDIS_STREAM_GROUP: ${REDIS_STREAM_GROUP:-storage-group}
+    ports:
+      - "127.0.0.1:${STORAGE_SERVER_PORT:-8083}:8080"
+    networks: [smartenergy-network]
+    depends_on:
+      smartenergy-redis:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
+    mem_limit: 768m
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    image: smartenergy-dashboard:local
+    container_name: smartenergy-dashboard
+    environment:
+      SMARTENERGY_STORAGE_URL: http://storage-service:8080
+      SMARTENERGY_ANALYTICS_URL: http://analytics-service:8080
+    ports:
+      - "127.0.0.1:${STREAMLIT_SERVER_PORT:-8501}:8501"
+    networks: [smartenergy-network]
+    depends_on:
+      storage-service:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
+    mem_limit: 768m
+    restart: unless-stopped
+
   smartenergy-simulator:
     profiles: ["simulation"]
     build:
       context: ./simulator
     image: smartenergy-simulator:local
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - smartenergy-network
     environment:
       PYTHONUNBUFFERED: "1"
-      NO_PROXY: "host.docker.internal,localhost,127.0.0.1"
+      NO_PROXY: "collector-service,localhost,127.0.0.1"
     command:
       - "--config"
       - "config.json"
       - "--url"
-      - "${SIMULATOR_TARGET_URL:-http://host.docker.internal:8081/api/measurements}"
+      - "${SIMULATOR_TARGET_URL:-http://collector-service:8080/api/measurements}"
       - "--duration"
       - "${SIMULATOR_DURATION_SECONDS:-120}"
     restart: "no"
@@ -97,10 +179,10 @@ services:
       smartenergy-cassandra:
         condition: service_healthy
     volumes:
-      - ./scripts/init_cassandra.cql:/scripts/init_cassandra.cql:ro
+      - ./scripts/init-cassandra.cql:/scripts/init-cassandra.cql:ro
     networks:
       - smartenergy-network
-    command: ["cqlsh", "smartenergy-cassandra", "9042", "-f", "/scripts/init_cassandra.cql"]
+    command: ["cqlsh", "smartenergy-cassandra", "9042", "-f", "/scripts/init-cassandra.cql"]
     restart: "no"
 
 volumes:

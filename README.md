@@ -1,153 +1,105 @@
-# SmartEnergy Hub — Plateforme Big Data & IA de Supervision Énergétique
+# SmartEnergy Hub — Supervision énergétique distribuée
 
-Plateforme distribuée d'ingestion, de traitement en flux, d'analyse et de supervision en temps réel de mesures énergétiques IoT, réalisée dans le cadre du projet de Master 1 MSI.
+Projet individuel de Master 1 : collecte de mesures simulées, transport Redis Streams, séries temporelles Cassandra, métadonnées MongoDB et analyse énergétique. Collector, Storage, Analytics et le dashboard Streamlit s'exécutent dans Docker. La prévision ML reste une extension à réaliser.
 
----
+## Démarrage
 
-## 1. Objectifs & Fonctionnalités Clés
-
-- **Ingestion à haute performance** : API REST Spring Boot réactive (`POST /api/measurements`) avec validation stricte et acquittement immédiat `HTTP 202 Accepted`.
-- **Streaming asynchrone découplé** : Bufferisation résiliente via **Redis Streams** et traitement par Consumer Group (`storage-group`).
-- **Persistance polyglotte adaptée** :
-  - **Apache Cassandra** : Séries temporelles volumineuses horodatées, partitionnées par `(sensor_id, day)`.
-  - **MongoDB** : Métadonnées riches des capteurs, configurations d'alertes et agrégats journaliers.
-- **Analytique actuelle** : résumés quotidiens (kWh, min, max, moyenne) et détection par seuil ; les endpoints Analytics et les modèles prédictifs restent à développer.
-- **Restitution prévue** : documentation OpenAPI / Swagger UI et dashboard Streamlit à développer à l'étape 8 ou après.
-
----
-
-## 2. Architecture & Rôles des Composants
-
-```
-[ Simulateur IoT ]
-        │  HTTP POST (Mesures)
-        ▼
-[ Collector Service (Spring Boot - Hôte : 8081) ]
-        │  Publication asynchrone
-        ▼
-[ Redis Streams (Docker : 6380) ]
-        │  XREADGROUP (storage-group)
-        ▼
-[ Storage Service (Spring Boot - Hôte : 8083) ]
-       ├──▶ Cassandra 4.1 (Docker : 9042)       -> Séries temporelles
-       └──▶ MongoDB (Docker : 27017)           -> Métadonnées & Agrégats
-        │  XACK (post-persistance)
-        ▼
-[ API de consultation existante (Storage : 8083) ]
-        ▲
-        │  Consultation REST
-[ Dashboard Streamlit prévu (Hôte : 8501) ]
-```
-
-Consulter [`docs/architecture.md`](docs/architecture.md) pour les justifications détaillées et la conception technique.
-
----
-
-## 3. Règles d'Exécution & Environnement
-
-### Emplacement d'exécution des composants
-- **Sur l'Hôte (hors conteneur)** :
-  - Applications Spring Boot (`collector-service`, `storage-service`).
-  - Dashboard utilisateur `streamlit`.
-- **Dans Docker** :
-  - **Apache Cassandra** : conteneur `smartenergy-cassandra` (`cassandra:4.1`, version 4.1.12 vérifiée sur ce PC), volume `smartenergy_cassandra_data`, port hôte `127.0.0.1:9042`.
-  - **Redis Streams** : Conteneur `smartenergy-redis` (`redis:7.4-alpine`, port hôte 6380).
-  - **MongoDB** : conteneur `smartenergy-mongo` (`mongo:7.0-jammy`, port hôte `127.0.0.1:27017`), volume `smartenergy_mongo_data`. Voir [l'installation Docker](docs/docker-databases.md).
-
-### Prérequis système vérifiés
-- **JDK** : OpenJDK 17.0.20.1 (installé)
-- **Build tool** : Apache Maven 3.9.12 (installé)
-- **Python** : Python 3.12.3 (installé)
-- **Docker & Docker Compose** : Opérationnels
-
----
-
-## 4. Démarrage Rapide
-
-### 1. Vérifier le contexte, les conteneurs et les ports
-```bash
-docker context show
-docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-ss -ltn
-docker compose config
-```
-
-Sur ce PC, le contexte vérifié est `default`. Les ports 6380, 27017 et 9042 appartiennent aux bases SmartEnergy ; les ports 8081 et 8083 doivent être libres avant de lancer Spring Boot. Préserver tous les conteneurs et données d'autres projets.
-
-### 2. Démarrer les bases et initialiser le schéma
-```bash
-docker compose up -d
-docker compose ps -a
-# Attendre que Redis, MongoDB et Cassandra soient tous healthy.
-docker inspect --format '{{.Name}} {{.State.Health.Status}}' \
-  smartenergy-redis smartenergy-mongo smartenergy-cassandra
-# L'initialiseur CQL doit terminer avec le code 0.
-init_id="$(docker compose ps -a -q smartenergy-cassandra-init)"
-docker wait "$init_id"
-test "$(docker inspect --format '{{.State.ExitCode}}' "$init_id")" = 0
-scripts/verify_databases.sh
-```
-
-Si les images manquent, `docker compose pull` les télécharge. Compose fournit les trois bases et l'initialiseur idempotent ; détails et attente de santé bornée dans [le guide Docker](docs/docker-databases.md). Le schéma est appliqué sans suppression de données.
-
-### 2 bis. Vérifier les suites Java sur le nouveau PC
-
-Dans chaque module, lancer `mvn -q test` en ligne au premier passage pour remplir le cache Maven. Un cache incomplet fait échouer `mvn -o` avant les tests. Les variables de connexion disponibles sont dans `.env.example` ; les valeurs par défaut des applications correspondent aux ports ci-dessus. Compose lit `.env`, mais Maven ne le charge pas automatiquement : exporter les variables nécessaires dans les terminaux Spring Boot si les ports sont personnalisés.
-
-### 3. Lancer les services Spring Boot (sur l'hôte)
-```bash
-# Terminal 1 : Collector Service (Port 8081)
-cd collector-service && mvn spring-boot:run
-
-# Terminal 2 : Storage Service (Port 8083)
-cd storage-service && mvn spring-boot:run
-```
-
-### 4. Simulateur et Dashboard (étapes distinctes)
-
-Le simulateur dispose d'un profil Compose `simulation`. Après démarrage des deux applications Spring Boot sur l'hôte :
+Prérequis déjà présents : Docker et Docker Compose. Le premier build télécharge les images et dépendances ; aucun JDK, Maven ou environnement Python n'est requis sur l'hôte pour l'exécution Docker.
 
 ```bash
-docker compose --profile simulation build smartenergy-simulator
-docker compose --profile simulation up --no-deps --abort-on-container-exit --exit-code-from smartenergy-simulator smartenergy-simulator
+docker --context default compose up -d --build
+docker --context default compose ps
 ```
 
-Il s'exécute pendant 120 secondes et joint le Collector via `host.docker.internal:8081`. Voir [le guide Docker](docs/docker-databases.md) pour les réglages et les contrôles de persistance. Le Dashboard Streamlit reste à implémenter ; il devra être lancé sur l'hôte.
+Sur ce PC, Cassandra 4.1 et ses données existent déjà. Ne pas recréer son conteneur ni supprimer ses volumes. La [procédure Docker](docs/docker-databases.md) décrit le premier démarrage ciblé des applications sur cette installation.
 
-### 5. Vérifier la persistance Cassandra
+| Composant | Adresse locale | Fonction |
+| --- | --- | --- |
+| Dashboard | http://127.0.0.1:8501 | Capteurs, courbe, énergie et anomalies |
+| Collector | http://127.0.0.1:8081 | POST /api/measurements |
+| Storage | http://127.0.0.1:8083 | Capteurs et mesures brutes |
+| Analytics | http://127.0.0.1:8084 | Indicateurs, résumés et rapports |
+
+Swagger : ajouter `/swagger-ui/index.html` aux URL des services Java. Les ports Actuator 9080 sont internes à chaque conteneur et ne sont pas publiés. Les API restent locales et sans authentification avancée.
+
+## Architecture
+
+Simulateur → Collector → Redis Streams → Storage → Cassandra.
+Après l'écriture, Storage appelle Analytics pour actualiser le résumé MongoDB, puis acquitte Redis. Analytics lit Cassandra et les métadonnées MongoDB et possède tous les calculs, résumés et rapports. Le dashboard consulte Storage et Analytics par HTTP.
+
+Un HTTP 202 signifie que Redis a accepté l'événement. Il ne garantit pas encore son stockage final. Une panne Analytics laisse le message en attente ; sa reprise recalcule le résumé sans double comptage.
+
+## Démonstration
+
 ```bash
-# Envoyer une mesure (réponse attendue : HTTP 202)
-curl -i -X POST http://localhost:8081/api/measurements \
-  -H "Content-Type: application/json" \
-  -d '{"sensorId":"sensor-001","timestamp":"2026-10-22T00:01:00Z","powerKw":13.7,"voltage":231.0,"temperature":21.9}'
-
-# Lire l'historique du jour via l'API du Storage Service
-curl -s "http://localhost:8083/api/measurements/sensor-001/day/2026-10-22"
-
-# Vérifier directement dans Cassandra
-docker --context default exec smartenergy-cassandra cqlsh -e \
-  "SELECT sensor_id, day, measured_at, power_kw FROM smartenergy.measurements_by_sensor_day WHERE sensor_id='sensor-001' AND day='2026-10-22';"
+python3 scripts/prepare_demo.py
+docker --context default compose --profile simulation run --rm smartenergy-simulator
 ```
 
----
+Le script Python standard enregistre les cinq capteurs manquants et préserve les configurations déjà présentes. Le simulateur s'exécute 120 secondes par défaut ; il n'est pas lancé automatiquement avec les applications.
 
-## 5. Suivi de Projet & Documentation
+Exemple de mesure : [scripts/sample-data.json](scripts/sample-data.json). Pour l'envoyer :
 
-- [Checklist d'avancement](docs/progress.md)
-- [Architecture détaillée](docs/architecture.md)
-- [Installation Docker des bases](docs/docker-databases.md)
-- [Sécurité et profils local/demo](docs/security.md) — diagnostics désactivés par défaut ; profil demo local sans Swagger.
-- [Santé et métriques Actuator locales](docs/observability.md) — Collector `127.0.0.1:9081`, Storage `127.0.0.1:9083`, endpoints `/actuator/health` et `/actuator/metrics`.
-- [Reprise sur ce PC : bases, suites Java et scénario réel](compte_rendu/etape_8/reprise_nouveau_pc_bases.md)
-- [Reprise de l'étape 5](compte_rendu/etape_5/reprise-2026-10-26.md)
-- [API capteurs et résumés (étape 6)](docs/api.md)
-- [Tests et preuves](docs/tests.md)
-- [Compte rendu de l'étape 6](compte_rendu/etape_6/compte_rendu.md)
-- [Compte rendu de l'étape 7](compte_rendu/etape_7/compte_rendu.md)
-- Comptes rendus versionnés : `compte_rendu/` (les anciens chemins absolus désignent la machine précédente).
+```bash
+curl -i -H 'Content-Type: application/json' --data-binary @scripts/sample-data.json http://127.0.0.1:8081/api/measurements
+```
 
-## 6. Traitement fiable des mesures (étape 7, en cours)
+L'horodatage de cet exemple est fixe et pédagogique. Le simulateur produit les dates de son exécution.
 
-Le Storage Service consomme `energy-measurements` avec le groupe `storage-group`. Pour un capteur enregistré dans MongoDB, il écrit d'abord la mesure brute dans Cassandra, recalcule le résumé quotidien depuis les lignes Cassandra et l'enregistre dans MongoDB, puis acquitte le message Redis. Le résumé porte l'identifiant stable `sensorId:YYYY-MM-DD` : rejouer la même mesure remplace la ligne Cassandra et recalcule le même document, sans additionner deux fois la puissance ou l'énergie. Si le capteur n'est pas encore enregistré, la mesure brute est conservée dans Cassandra ; aucun résumé MongoDB n'est créé pour ce capteur.
+## Organisation du dépôt
 
-En cas d'échec de Cassandra ou MongoDB, le message reste en attente dans Redis et est rejoué après retour du service. Une panne temporaire MongoDB et la reprise ont été vérifiées en conditions réelles dans le [compte rendu de l'étape 7](compte_rendu/etape_7/compte_rendu.md). Les applications Spring Boot continuent de tourner sur l'hôte ; Redis, MongoDB et Cassandra restent dans Docker `default`.
+```text
+smartenergy-hub/
+├── README.md
+├── docker-compose.yml
+├── docs/                 # architecture, API, tests et exploitation
+├── doc/                  # parcours d'évaluation par étape et synthèse
+├── compte_rendu/         # preuves et résultats datés
+├── simulator/
+├── collector-service/
+├── storage-service/
+├── analytics-service/
+├── dashboard/
+├── gateway-service/      # optionnel, non implémenté
+├── monitoring/           # Actuator ; Grafana/Prometheus non ajoutés
+├── scripts/
+│   ├── init-cassandra.cql
+│   └── sample-data.json
+└── models/               # futurs modèles exportés, aucun modèle entraîné
+```
+
+La structure reprend celle de la page 8 du guide, avec le dashboard et les dossiers documentaires utiles au cours.
+
+## Documentation pour l'évaluation
+
+Commencer par [doc/README.md](doc/README.md) puis le [rapport de synthèse](doc/rapport-projet.md). Les chapitres 0 à 12 expliquent le MVP et ses preuves datées. Le [chapitre de migration Docker/Analytics](doc/migration-docker-analytics/documentation.md) précise les changements d'architecture du 1er novembre 2026.
+
+Guides techniques : [architecture](docs/architecture.md), [API](docs/api.md), [tests](docs/tests.md), [sécurité](docs/security.md), [Docker](docs/docker-databases.md), [progression](docs/progress.md). La documentation distingue résultats réellement observés et éléments restant à valider.
+
+## Vérification
+
+Sur l'hôte, pour le développement : Java 17/Maven et un environnement Python disposant des dépendances du dashboard.
+
+```bash
+(cd collector-service && mvn -o -q test)
+(cd storage-service && mvn -o -q test)
+(cd analytics-service && mvn -o -q test)
+.venv/bin/python -m unittest dashboard.test_client dashboard.test_app -v
+python3 -m unittest discover -s scripts -p 'test_*.py'
+```
+
+Contrôle de migration sur les applications Docker démarrées :
+
+```bash
+python3 scripts/verify_docker_migration.py --output compte_rendu/migration-docker-analytics/verification.json
+```
+
+Ce contrôle crée des données distinctes et les conserve. Il arrête temporairement Analytics, vérifie les messages en attente, redémarre les applications et compare les identités des bases/volumes. Ne pas l'exécuter pendant une autre injection si l'on veut isoler ses résultats.
+
+## Arrêt et données
+
+```bash
+docker --context default compose stop collector-service storage-service analytics-service dashboard
+```
+
+Les bases peuvent rester actives sur ce PC. Ne pas utiliser `docker compose down -v`, ni supprimer un volume. Les [limites de sécurité](docs/security.md) et celles des calculs d'énergie doivent être prises en compte avant toute exposition hors de la machine.

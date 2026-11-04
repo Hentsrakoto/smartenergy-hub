@@ -2,6 +2,30 @@
 
 Ce document recense l'état d'avancement de chaque étape du projet conformément au guide de référence et aux règles du skill `rules`.
 
+## Migration Docker / Analytics — contrôles du 2026-11-04
+
+**Préparation vidéo :** [guide de dix minutes](../doc/presentation-video/guide-10-minutes.md)
+ajouté. Les benchmarks de l'architecture Docker restent à réaliser ; les chiffres
+du 1er novembre décrivent la version antérieure. Aucun nouveau test de charge
+n'a été exécuté pendant cet audit documentaire.
+
+**Architecture validée ; réalisation techniquement vérifiée, à relire par l'étudiant.**
+
+- [x] Collector, Storage, Analytics et dashboard dans Docker ; trois bases existantes conservées.
+- [x] Calculs centralisés dans Analytics ; anciennes API Storage conservées par relais.
+- [x] 18 tests Collector, 100 Storage, 30 Analytics, 17 dashboard et 3 scripts réussis.
+- [x] Scénario réel : panne Analytics, PEL, reprise sans doublon, rapports stables et redémarrage applicatif.
+- [x] Conteneurs et volumes des bases identiques avant/après ; initialiseur CQL terminé en 0.
+- [x] Swagger, supervision interne, erreurs HTTP et utilisateurs Docker vérifiés.
+- [x] Documentation et arborescence actualisées ; [compte rendu](../compte_rendu/migration-docker-analytics/rapport.md).
+- [ ] Relecture du résultat par l'étudiant ; clone propre/autre machine non essayé.
+- [ ] Régression ML : extension suivante, aucun modèle entraîné à ce stade.
+
+## Extensions — 2026-11-01
+
+- **Front Streamlit : En cours — à valider par l'étudiant.** Interface de consultation ajoutée, 15 tests réussis et lecture des données existantes vérifiée en navigateur (desktop et 375 px). Contrôles et limites dans `doc/extensions/front/documentation.md` et `compte_rendu/extensions/front.md`.
+- **Régression ML : À faire.** Deuxième extension demandée, après validation du front. Prévoir séparation chronologique entraînement/validation/test, baseline, MAE et RMSE ; aucun modèle entraîné à ce stade.
+
 **Légende des statuts :**
 - `À faire` : Étape non encore commencée.
 - `En cours` : Étape en cours de réalisation.
@@ -100,7 +124,17 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 - [x] Compte-rendu d'étape rédigé dans `/home/hents/Documents/code/techweb2/compte_rendu/etape_5/compte_rendu.md`.
 
 ---
-*Dernière mise à jour : 2026-10-29*
+*Dernière mise à jour : 2026-11-01*
+
+## Compléments de l'audit PDF — projet de cours, 2026-11-01
+
+- [x] Étapes 5/11 : comparaison de deux volumes et de leurs temps, métriques et limites documentées (`docs/performance.md`, relevés JSON conservés).
+- [x] Étapes 6/8 : préparation des cinq capteurs, préservation des configurations existantes, exemples Swagger et vérifications HTTP.
+- [x] README/architecture : état actuel, rapports MongoDB et absence de prévision/dashboard précisés ; garantie non mesurée de 5 ms retirée.
+- [x] Démonstration courte adaptée au cours et scénario d'anomalie vérifié (`docs/course-demo.md`).
+- [ ] Relecture et validation des compléments par l'étudiant.
+- [x] Dossier documentaire `doc/`, treize chapitres par étape et rapport de synthèse suivant le plan du PDF consolidés avec révision humanizer le 2026-11-01. Relecture de l'étudiant encore attendue avant remise.
+- [ ] Essai sur une autre machine / clone propre : non réalisé. Aucun diaporama de soutenance demandé ; il s'agit d'un projet de cours.
 
 ## Reprise des bases sur le nouveau PC — 2026-10-27
 

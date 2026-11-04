@@ -1,19 +1,48 @@
 # API SmartEnergy Hub
 
+## Répartition après migration Docker — 1er novembre 2026
+
+| API | Propriétaire | URL locale |
+| --- | --- | --- |
+| POST /api/measurements | Collector | http://127.0.0.1:8081 |
+| CRUD /api/sensors et lectures /api/measurements/** | Storage | http://127.0.0.1:8083 |
+| /api/analytics/**, daily-summary et daily-report | Analytics | http://127.0.0.1:8084 |
+
+Les anciennes routes analytiques de Storage sont conservées comme relais HTTP
+dépréciés, sans calcul local. Les structures de réponses décrites ci-dessous
+restent valides. Le dashboard utilise directement le service propriétaire.
+Swagger/OpenAPI est disponible sur les trois services en profil Docker :
+`/swagger-ui/index.html` et `/v3/api-docs`. Le profil demo le désactive.
+
+Analytics propose aussi `POST /internal/sensors/{id}/daily-summary?date=YYYY-MM-DD`,
+utilisé par Storage après écriture Cassandra et avant XACK. Ce POST force le
+recalcul et retourne le même DTO que daily-summary. Le 404 capteur absent comporte
+`code: SENSOR_NOT_FOUND` ; une absence de mesures ou une route inconnue ne porte
+pas ce code. Une panne de la dépendance produit un 503 sur les relais Storage,
+pas une réponse vide ou des statistiques à zéro. L'endpoint interne est accessible
+aux utilisateurs locaux via 8084 ; aucune authentification n'est ajoutée ici.
+
+Les indications « étapes 6/8 » ci-dessous conservent les contrats historiques.
+Le calcul et la persistance des agrégats/rapports appartiennent désormais à
+Analytics. Voir le [chapitre de migration](../doc/migration-docker-analytics/documentation.md).
+
 ## Documentation interactive
 
-Les applications Spring Boot tournent sur l'hôte et exposent chacune leur propre contrat OpenAPI. Après leur démarrage :
+Les applications Spring Boot tournent dans Docker et exposent chacune leur contrat OpenAPI via un port local publié. Après leur démarrage :
+
+En profil `local`, les opérations principales comportent des exemples de corps et de réponses. Storage utilise le nom d'exemple `cours` ; Collector documente aussi les erreurs `validation` et `indisponible`. Les valeurs sont fictives et ne constituent pas des résultats mesurés ni des capteurs automatiquement créés. La préparation des cinq capteurs réels du simulateur est décrite dans `docs/course-demo.md`.
 
 | Service | Swagger UI | Contrat JSON |
 | :--- | :--- | :--- |
 | Collector (port 8081) | `http://localhost:8081/swagger-ui.html` | `http://localhost:8081/v3/api-docs` |
 | Storage (port 8083) | `http://localhost:8083/swagger-ui.html` | `http://localhost:8083/v3/api-docs` |
+| Analytics (port 8084) | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` |
 
 `POST /api/measurements` relève du Collector : un `202 Accepted` signifie que Redis Streams a accepté l'événement, sans garantir sa persistance finale. Les lectures de mesures, capteurs et résumés relèvent du Storage Service. Les ports peuvent être remplacés via `COLLECTOR_SERVER_PORT` et `STORAGE_SERVER_PORT`.
 
 ## Capteurs et résumés — étape 6
 
-Base : `http://localhost:8083`. Le Storage Service tourne sur l'hôte ; MongoDB doit être accessible à l'URI `MONGO_URI` (par défaut `mongodb://localhost:27017/smartenergy`).
+Base des capteurs : `http://localhost:8083`. Storage accède à MongoDB via son DNS Docker. Pour daily-summary et daily-report, utiliser de préférence Analytics sur `http://localhost:8084` ; les routes Storage restent des relais compatibles.
 
 | Méthode | Route | Réponse | Erreurs principales |
 | :--- | :--- | :--- | :--- |

@@ -36,12 +36,12 @@ Cassandra tourne déjà dans un conteneur Docker sur la machine de l'étudiant.
 - Les scripts CQL du projet peuvent créer le keyspace et les tables requis, mais ne doivent pas supprimer les données existantes ni exécuter de `DROP` destructif sans confirmation explicite.
 
 ### 2.3 Politique d'exécution des technologies
-L'objectif est que les dépendances et composants exécutables tournent sous Docker, **à l'exception de Spring Boot et Streamlit**, qui doivent être lancés directement sur la machine hôte.
+Depuis la demande explicite de l'étudiant et la validation de l'architecture le 1er novembre 2026, **les applications Spring Boot et le dashboard Streamlit tournent également dans Docker**, conformément au guide. Cette décision remplace l'ancienne exception d'exécution sur l'hôte ; les rapports antérieurs restent des preuves historiques.
 
-- **Sur l'hôte (hors Docker)** : les applications/services Spring Boot et l'interface Streamlit.
+- **Dans Docker** : Collector, Storage, Analytics et le dashboard Streamlit. Le lancement sur l'hôte reste possible pour les tests et le débogage, sans constituer le mode de démonstration par défaut.
 - **Dans Docker** : Redis (avec Streams), MongoDB, et les autres services auxiliaires ou outils d'infrastructure retenus (par exemple Prometheus/Grafana s'ils sont ajoutés après le MVP). Réutiliser Cassandra via son conteneur existant.
 - Le simulateur de capteurs doit être conteneurisé si sa technologie et son fonctionnement le permettent sans compromettre les exigences du guide. Sinon, documenter précisément pourquoi il doit tourner sur l'hôte et demander une décision si cela change la règle générale.
-- Ne dockerise pas Spring Boot ni Streamlit. Ne mets pas leurs applications dans des images Docker et ne les ajoute pas comme services applicatifs Docker Compose.
+- Fournir un Dockerfile par application et les intégrer à Docker Compose avec utilisateurs non privilégiés, healthchecks et configuration par environnement. Analytics possède les calculs descriptifs, les anomalies, les agrégats et les rapports ; Storage conserve l'ingestion, la persistance des mesures et les métadonnées, avec relais HTTP temporaires pour compatibilité.
 - Assure la connectivité hôte ↔ conteneurs : documente les URL/ports selon le système réel. N'utilise pas `localhost` comme adresse d'un conteneur vers un autre ; utilise le nom de service/réseau Docker pour les communications entre conteneurs.
 - Évite les conflits de ports. Vérifie les ports actuellement utilisés avant d'en attribuer ou d'en publier de nouveaux.
 - Les ports des bases de données ne doivent être exposés à l'hôte que si nécessaire au développement local. Ne publie pas de ports supplémentaires sans raison.
@@ -175,7 +175,7 @@ Validation : les routes principales peuvent être comprises et testées via Swag
 
 ### Étape 10 — Conteneurisation et exécution
 - Dockeriser Redis, MongoDB et les outils d'infrastructure nécessaires, et réutiliser le conteneur Cassandra existant.
-- Spring Boot et Streamlit restent sur l'hôte, hors Docker.
+- Spring Boot et Streamlit sont conteneurisés depuis la décision validée le 1er novembre 2026. Le mode hôte est conservé pour le développement uniquement.
 - Conteneuriser le simulateur si possible et compatible avec les règles précédentes.
 - Ajouter des healthchecks appropriés, des volumes persistants, des réseaux explicites et des politiques de redémarrage raisonnables.
 - Utiliser des versions d'images explicites et compatibles, pas `latest` par défaut.
@@ -290,7 +290,7 @@ Avant toute déclaration finale, vérifier autant que possible :
 - les healthchecks/métriques prévus fonctionnent ;
 - aucun secret n'est commité ;
 - README et documents sont à jour ;
-- l'environnement respecte les règles d'exécution : Spring Boot et Streamlit sur l'hôte, dépendances conteneurisées et Cassandra existante réutilisée.
+- l'environnement respecte les règles d'exécution : applications Spring Boot et Streamlit dans Docker, dépendances conteneurisées et Cassandra existante réutilisée sans perte de données.
 
 ## 8. Comportement attendu de l'agent
 
