@@ -1,14 +1,10 @@
 # Étape 8 — Consulter les données par API
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape7/documentation.md) · [Étape suivante](../etape9/documentation.md)
 
 ## Rendre les données lisibles sans accès direct aux bases
 
-Les routes de consultation sont exposées par Storage. Elles permettent de retrouver les capteurs, leurs mesures et les indicateurs sans écrire une requête CQL ou MongoDB. Les noms de routes sont adaptés à l'application tout en conservant les fonctions demandées dans le guide.
+Storage expose les capteurs et les mesures. Analytics expose les indicateurs, anomalies, résumés et rapports. Les anciennes routes analytiques de Storage restent disponibles par relais HTTP. Elles permettent de retrouver les capteurs, leurs mesures et les indicateurs sans écrire une requête CQL ou MongoDB. Les noms de routes sont adaptés à l'application tout en conservant les fonctions demandées dans le guide.
 
 | Route GET | Usage |
 | --- | --- |
@@ -26,7 +22,7 @@ Les périodes d'historique et d'Analytics sont limitées à 31 jours. Une pério
 
 ## Swagger et exemples
 
-Le profil local active Swagger à `/swagger-ui/index.html` et le contrat JSON à `/v3/api-docs` sur chacun des ports métier. Collector documente l'ingestion ; Storage documente la consultation. Les deux applications utilisent springdoc 2.6.0 avec Spring Boot 3.3.4. Le profil demo désactive volontairement ces routes.
+Les profils local et docker activent Swagger à `/swagger-ui/index.html` et le contrat JSON à `/v3/api-docs`. Collector documente l'ingestion sur 8081 ; Storage, les capteurs et les mesures sur 8083 ; Analytics, les calculs sur 8084. Les trois services utilisent springdoc 2.6.0 avec Spring Boot 3.3.4. Le profil demo, réservé au mode hôte, désactive ces routes.
 
 Les compléments du 1er novembre ajoutent des exemples de requêtes, résultats et erreurs. Ils sont fixes, fictifs et étiquetés `cours` côté Storage ; ils ne lisent pas les bases et ne créent pas un capteur à l'ouverture de Swagger. Collector conserve une réponse 202 sans corps et illustre aussi 400 et 500.
 

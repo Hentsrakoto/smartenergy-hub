@@ -2,7 +2,7 @@
 
 ## Architecture actuelle
 
-La migration validée le 1er novembre 2026 sépare Analytics de Storage et place les applications dans Docker. Les preuves antérieures décrivent le mode hôte ; le [chapitre de migration](../doc/migration-docker-analytics/documentation.md) explique ce changement.
+Collector, Storage, Analytics et le dashboard s'exécutent dans Docker. Analytics regroupe les calculs, tandis que Storage conserve l'ingestion et la consultation des mesures. Les preuves antérieures décrivent le mode hôte ; le [chapitre de migration](../doc/migration-docker-analytics/documentation.md) explique ce changement.
 
 | Composant | Responsabilité | Données |
 | --- | --- | --- |
@@ -63,4 +63,4 @@ Les conteneurs Cassandra, Redis et MongoDB existants et leurs volumes sont prés
 
 ## Limites
 
-API locales sans JWT/TLS ni permissions applicatives fines. Réseau Docker de développement partagé, bases sans authentification. Historique non paginé côté serveur, agrégation par relecture coûteuse sur les gros volumes, coordination de calcul limitée à une réplique. Gateway, Grafana/Prometheus et modèles ML ne sont pas implémentés. La [sécurité](security.md) et les [preuves datées](tests.md) précisent le périmètre.
+Les API restent locales, sans JWT, TLS ou permissions applicatives fines. Les bases partagent un réseau Docker de développement sans authentification. L'historique n'est pas paginé côté serveur ; le recalcul du jour relit les mesures et devient coûteux quand le volume augmente. Les verrous de calcul coordonnent une seule réplique Analytics. Gateway, Grafana/Prometheus et modèles ML ne sont pas implémentés. La [sécurité](security.md) et les [preuves de vérification](tests.md) précisent le périmètre.

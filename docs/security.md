@@ -39,6 +39,6 @@ Les erreurs publiques masquent les détails internes. Le code SENSOR_NOT_FOUND e
 
 ## Validation et limites
 
-Les résultats de sécurité précédents restent datés dans les comptes rendus des étapes 11/12. La migration nécessite ses propres contrôles des ports, profils, utilisateurs Docker et erreurs HTTP, documentés dans le [compte rendu](../compte_rendu/migration-docker-analytics/rapport.md).
+Les comptes rendus des étapes 11 et 12 conservent les contrôles de sécurité du mode hôte. Les contrôles des ports, profils, utilisateurs Docker et erreurs HTTP réalisés lors de la migration sont documentés dans le [compte rendu](../compte_rendu/migration-docker-analytics/rapport.md).
 
 Aucun audit CVE complet ni test d'intrusion n'est revendiqué. JWT, OAuth2, rôles, HTTPS, sauvegardes automatisées et segmentation réseau fine restent des améliorations possibles avant tout usage distant.

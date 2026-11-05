@@ -1,27 +1,42 @@
-# Avant d'ouvrir OBS — préparation du tournage
+# Avant OBS — préparer les données et les fichiers de la vidéo
 
-Une fois cette préparation terminée, utiliser uniquement la
-[fiche de tournage en quatre étapes](fiche-tournage-10-min.md).
-Ne pas filmer les téléchargements, les builds ou l'attente des suites complètes.
+Cette page indique **quel programme lancer**, **ce qu'il produit** et **ce qui sera lu pendant la vidéo**. Les manipulations Swagger et les JSON à coller sont dans la [fiche de dix minutes](fiche-tournage-10-min.md).
 
-## 1. Ouvrir le projet et vérifier les services
+Toutes les commandes partent de la racine du dépôt, le dossier qui contient `docker-compose.yml`. La configuration utilise le contexte Docker `default`. Les journaux `.log`, les rapports Maven `target/` et l'environnement `.venv` sont des fichiers locaux ignorés par Git : ils ne sont pas fournis par un clone neuf.
 
-Toutes les commandes suivantes se lancent à la racine du dépôt :
+## 1. Vérifier les services
+
+Si les applications ne sont pas démarrées, suivre le [guide Docker](../../docs/docker-databases.md), puis :
 
 ```bash
-cd /home/hentsrakoto/Documents/code/smartenergy-hub
 mkdir -p compte_rendu/presentation-video
 set -o pipefail
-docker --context default compose ps
+docker --context default compose ps -a
 DOCKER_CONTEXT=default bash scripts/verify_databases.sh
-python3 scripts/prepare_demo.py
 ```
 
-Les sept services permanents doivent être healthy. Ils sont déjà démarrés sur
-le PC contrôlé ; si nécessaire, utiliser la procédure du [guide Docker](../../docs/docker-databases.md).
-Conserver les bases et volumes existants.
+Attendre les sept services permanents healthy. L'initialiseur CQL doit avoir terminé en `Exited (0)`. Le simulateur peut être arrêté : il s'agit d'une tâche finie. Les fichiers de simulation ne doivent être lus qu'après son exécution.
 
 ## 2. Préparer les bilans de tests
+
+### Prérequis du mode développement
+
+Les suites Java demandent Java 17 et Maven sur l'hôte. Le mode Maven `-o` ci-dessous suppose les dépendances déjà en cache. Un clone neuf sans ce cache doit d'abord résoudre les dépendances avec Maven en ligne ; retirer alors `-o` lors du lancement choisi par le développeur.
+
+Les tests du dashboard demandent un environnement Python avec les versions de `dashboard/requirements.lock.txt`. `.venv` doit exister avant d'utiliser son interpréteur. Sa création et l'installation des dépendances sont des opérations explicites du développeur ; les commandes Docker de démarrage n'en dépendent pas. Les scripts et le simulateur utilisent la bibliothèque standard de Python.
+
+### Quel fichier lancer ?
+
+| Suite | Source des tests | Commande à lancer | Sortie produite |
+| --- | --- | --- | --- |
+| Collector | `collector-service/src/test/java/` | Maven sur `collector-service/pom.xml` | `collector-service/target/surefire-reports/` et `tests-collector.log` |
+| Storage | `storage-service/src/test/java/` | Maven sur `storage-service/pom.xml` | `storage-service/target/surefire-reports/` et `tests-storage.log` |
+| Analytics | `analytics-service/src/test/java/` | Maven sur `analytics-service/pom.xml` | `analytics-service/target/surefire-reports/` et `tests-analytics.log` |
+| Dashboard | `dashboard/test_client.py`, `dashboard/test_app.py` | `unittest` avec `.venv/bin/python` | `tests-dashboard.log` |
+| Scripts | `scripts/test_prepare_demo.py`, `scripts/test_measure_performance.py` | Découverte `unittest` dans `scripts/` | `tests-scripts.log` |
+| Simulateur, contrôle séparé | `simulator/test_simulator.py` | Découverte `unittest` dans `simulator/` | `tests-simulator.log` |
+
+Tous les journaux du tableau sont écrits dans `compte_rendu/presentation-video/` par les commandes suivantes :
 
 ```bash
 mvn -o -q -f collector-service/pom.xml test 2>&1 | tee compte_rendu/presentation-video/tests-collector.log
@@ -29,111 +44,116 @@ mvn -o -q -f storage-service/pom.xml test 2>&1 | tee compte_rendu/presentation-v
 mvn -o -q -f analytics-service/pom.xml test 2>&1 | tee compte_rendu/presentation-video/tests-analytics.log
 .venv/bin/python -m unittest dashboard.test_client dashboard.test_app -v 2>&1 | tee compte_rendu/presentation-video/tests-dashboard.log
 python3 -m unittest discover -s scripts -p 'test_*.py' -v 2>&1 | tee compte_rendu/presentation-video/tests-scripts.log
-python3 scripts/video_results.py --tests
+python3 -m unittest discover -s simulator -v 2>&1 | tee compte_rendu/presentation-video/tests-simulator.log
 ```
 
-Les nombres de référence du 4 novembre sont 18, 100 et 30 tests Java, puis 17 et
-3 tests Python. Dire les nombres réellement affichés si le code évolue. Ces tests
-sur l'hôte nécessitent les outils de développement déjà utilisés sur ce PC.
+Vérifier le succès de chaque suite avant de passer à la suivante. `set -o pipefail` évite que la réussite de `tee` masque l'échec d'un programme. Les logs Java peuvent contenir des erreurs volontairement simulées par les tests ; les rapports Surefire donnent le bilan de la suite.
+
+**Pendant la vidéo**, lire les rapports existants :
+
+```bash
+python3 scripts/video_results.py --tests
+tail -n 5 compte_rendu/presentation-video/tests-dashboard.log
+tail -n 5 compte_rendu/presentation-video/tests-scripts.log
+```
+
+`video_results.py --tests` ne lance aucun test : il lit les XML dans les trois dossiers `target/surefire-reports/`. Il échoue explicitement si les rapports n'existent pas. Le bilan de référence est 148 tests Java, 17 dashboard et 3 scripts. Les cinq tests du simulateur sont présentés séparément.
 
 ## 3. Préparer la preuve de panne/reprise
 
-La preuve existante du 4 novembre est disponible sans relancer de panne :
+Pour montrer la preuve déjà conservée :
 
 ```bash
-python3 scripts/video_results.py --migration compte_rendu/migration-docker-analytics/verification.json
+python3 scripts/video_results.py --migration compte_rendu/presentation-video/verification-video.json
 ```
 
-Pour refaire le scénario sur ce PC, séparément des autres injections :
+**Programme qui produit une nouvelle preuve :** `scripts/verify_docker_migration.py`. Pour le refaire, utiliser un autre fichier :
 
 ```bash
-python3 scripts/verify_docker_migration.py --output compte_rendu/presentation-video/verification-video.json
+python3 scripts/verify_docker_migration.py --output compte_rendu/presentation-video/verification-video-02.json
 ```
 
-Ce script arrête temporairement Analytics puis redémarre les applications ; il
-conserve ses données de test. Il vérifie aussi les données historiques de
-sensor-002 au 1er novembre : il est adapté au jeu actuel de ce PC, et ne doit pas
-être présenté comme un test générique sur une base vide. Il doit finir en code 0.
-Dans la fiche, le chemin de la preuve existante est utilisé ; remplacer ce chemin
-si l'on veut montrer le nouveau relevé. Les dates des preuves restent visibles.
+Ce programme arrête temporairement Analytics, le rétablit puis redémarre les applications. Il crée des données distinctes et les conserve. Il dépend aussi du jeu historique de sensor-002 prévu par son code : ce n'est pas un test générique sur une base vide. Sur un clone neuf, utiliser d'abord le scénario Swagger de la fiche ; ne pas annoncer ce contrôle comme réussi sans avoir satisfait ses prérequis.
 
-## 4. Faire la simulation demandée par le PDF
+Lancer ce contrôle séparément des injections et benchmarks, avant OBS. La fiche lit `verification-video.json` ; pour présenter une nouvelle preuve réussie, remplacer son chemin par celui effectivement produit.
+
+## 4. Créer le journal de simulation de deux minutes
+
+**Programme exécuté :** `simulator/sensor_simulator.py`, dans le conteneur du service `smartenergy-simulator`. **Configuration :** `simulator/config.json`, copiée sous `/app/config.json` dans l'image. **Sortie locale créée :** `compte_rendu/presentation-video/simulation-2min.log`.
 
 ```bash
+python3 scripts/prepare_demo.py
+docker --context default compose --profile simulation build smartenergy-simulator
 docker --context default compose --profile simulation run --no-deps smartenergy-simulator \
   --config config.json --url http://collector-service:8080/api/measurements \
   --duration 120 --interval 2 --anomaly-type power_spike \
   --anomaly-sensor sensor-002 --anomaly-start 30 --anomaly-duration 20 \
   2>&1 | tee compte_rendu/presentation-video/simulation-2min.log
+```
+
+Le programme `scripts/prepare_demo.py` enregistre les cinq capteurs manquants et vérifie la configuration de ceux déjà présents. S'il signale une différence, examiner les seuils plutôt que les écraser. Le simulateur fonctionne environ deux minutes ; attendre le bloc **RÉSUMÉ DU TEST DE SIMULATION** avant de lire :
+
+```bash
 tail -n 25 compte_rendu/presentation-video/simulation-2min.log
 ```
 
-Environ 300 mesures sont attendues ; retenir le bilan exact. La durée doit être
-au moins deux minutes et les cinq capteurs doivent apparaître. Capturer un court
-extrait puis le bilan. Ne pas attribuer au dernier lancement toutes les mesures
-déjà présentes dans le résumé quotidien du dashboard.
+Le bilan donne le nombre émis et accepté, les rejets et les erreurs. Ne pas annoncer automatiquement 300 mesures. Si la commande est interrompue, un fichier `.log` peut exister sans prouver un essai complet de deux minutes. Le fichier historique `simulator/stats_2min.json` est une autre preuve, pas la sortie de cette commande.
 
-## 5. Mesurer la version Docker actuelle
+## 5. Préparer les résultats de performance
 
-Attendre la fin des tests, de la simulation et de la reprise Redis. Ne pas les
-faire tourner pendant le benchmark. Ces deux commandes créent chacune deux
-capteurs de test et conservent leurs mesures.
+Les fichiers `docs/performance/video-docker-1-client-01.json` et `docs/performance/video-docker-6-clients-01.json` sont des relevés conservés. Pour les afficher sans nouvelle charge :
+
+```bash
+python3 scripts/video_results.py --performance docs/performance/video-docker-1-client-01.json docs/performance/video-docker-6-clients-01.json
+```
+
+**Programme qui les produit :** `scripts/measure_performance.py`. Il s'exécute ici avec Python dans le conteneur dashboard pour joindre Actuator sur les ports internes. Attendre la fin des suites, simulations et reprises. Chaque exécution crée deux capteurs uniques et conserve leurs mesures.
+
+Pour une répétition, les noms suffixés 02 préservent les relevés 01 :
 
 ```bash
 docker --context default compose exec -T dashboard python - \
   --collector http://collector-service:8080 --storage http://storage-service:8080 \
   --management http://storage-service:9080 --collector-management http://collector-service:9080 \
   --small 100 --large 1000 --workers 1 --reads 30 --deadline 300 \
-  < scripts/measure_performance.py > docs/performance/video-docker-1-client-01.json
+  < scripts/measure_performance.py > docs/performance/video-docker-1-client-02.json
 
 docker --context default compose exec -T smartenergy-redis redis-cli XINFO GROUPS energy-measurements
 ```
 
-Attendre pending=0 et lag=0 avant la seconde exécution :
+Attendre pending=0 et lag=0, puis :
 
 ```bash
 docker --context default compose exec -T dashboard python - \
   --collector http://collector-service:8080 --storage http://storage-service:8080 \
   --management http://storage-service:9080 --collector-management http://collector-service:9080 \
   --small 100 --large 1000 --workers 6 --reads 30 --deadline 300 \
-  < scripts/measure_performance.py > docs/performance/video-docker-6-clients-01.json
+  < scripts/measure_performance.py > docs/performance/video-docker-6-clients-02.json
 
 docker --context default compose exec -T smartenergy-redis redis-cli XINFO GROUPS energy-measurements
-python3 scripts/video_results.py --performance docs/performance/video-docker-1-client-01.json docs/performance/video-docker-6-clients-01.json
+python3 scripts/video_results.py --performance docs/performance/video-docker-1-client-02.json docs/performance/video-docker-6-clients-02.json
 ```
 
-Les deux processus doivent réussir et produire leurs JSON complets. Les fichiers
-de novembre antérieurs à la migration ne remplacent pas ces résultats. Pour trois
-répétitions, utiliser les suffixes 02 et 03 plutôt que d'écraser les premiers.
-Le [guide détaillé](guide-10-minutes.md) explique le protocole et ses limites.
+Chaque processus doit finir sans erreur et produire un JSON complet. Pour une autre répétition, choisir un nom encore libre. Sauvegarder les contrôles Redis de fin d'essai si l'on veut établir le drainage final ; les échantillons de jauge des relevés 01 ne suffisent pas. Le [rapport de performance](../../docs/performance.md) explique les métriques et les limites.
 
-## 6. Préparer les fenêtres et le terminal de la prise
+## 6. Préparer Swagger et les fenêtres de la prise
 
-Garder un terminal principal ouvert pendant toute la prise. Ces variables restent
-dans ce terminal ; les commandes de la fiche réutilisent ses valeurs :
+Le capteur de démonstration est créé dans Swagger pendant l'étape 2 de la fiche. Il n'y a plus de variables de terminal à préparer. Vérifier avant la prise que `video-demo-001` est disponible via GET `/api/sensors/{id}` dans Swagger Storage. Un 404 signifie qu'il peut être créé. S'il existe, choisir un autre identifiant et le remplacer partout dans le scénario.
 
-```bash
-VIDEO_DAY="$(date -u +%F)"
-VIDEO_SENSOR="video-$(date -u +%Y%m%dT%H%M%S)"
-export VIDEO_DAY VIDEO_SENSOR
-curl -sS -i -X POST http://127.0.0.1:8083/api/sensors \
-  -H 'Content-Type: application/json' \
-  -d "{\"sensorId\":\"$VIDEO_SENSOR\",\"name\":\"Capteur de la vidéo\",\"maxPowerKw\":5,\"active\":true,\"samplingIntervalSeconds\":2}"
-```
+Les mesures du scénario Swagger utilisent des horodatages fixes pour rendre les lectures reproductibles. Sélectionner leur journée dans le dashboard. La simulation de deux minutes utilise au contraire les instants de son exécution : pour sa courbe, sélectionner `sensor-002` et le jour UTC de la simulation.
 
-Résultat attendu : 201. L'identifiant horodaté distingue chaque prise ; ne pas
-relancer cette création avec le même identifiant pendant la vidéo.
-
-Préparer ces onglets, sans les faire défiler pendant la recherche :
-
-| Fenêtre | Ouvrir directement |
+| Fenêtre | À préparer |
 | --- | --- |
-| Documentation | [architecture](../../docs/architecture.md), [rapport](../rapport-projet.md) et [tests](../../docs/tests.md) en aperçu Markdown |
-| Éditeur | Arborescence du dépôt, puis [CQL](../../scripts/init-cassandra.cql) |
-| Swagger | http://127.0.0.1:8081/swagger-ui/index.html |
-| Swagger Analytics | http://127.0.0.1:8084/swagger-ui/index.html |
-| Dashboard | http://127.0.0.1:8501 ; sensor-002 et la date UTC de la simulation |
-| Terminal | Racine du dépôt, variables VIDEO_DAY/VIDEO_SENSOR définies et police lisible |
+| Documentation | [README](../../README.md), section conteneurs puis arborescence du code |
+| Éditeur | [CQL](../../scripts/init-cassandra.cql) et [exemple JSON](../../scripts/sample-data.json) |
+| Swagger Storage | http://127.0.0.1:8083/swagger-ui/index.html : capteurs et historique |
+| Swagger Collector | http://127.0.0.1:8081/swagger-ui/index.html : envois valides et invalides |
+| Swagger Analytics | http://127.0.0.1:8084/swagger-ui/index.html : résumé et anomalies |
+| Dashboard | http://127.0.0.1:8501 |
+| Terminal | Racine du dépôt ; police lisible ; commandes de lecture Redis et des preuves |
 
-Tester le micro et la lisibilité du terminal. La fiche décrit dix minutes de
-vidéo finale : les prises peuvent être plus longues, puis être raccourcies.
+## 7. Cadrer OBS
+
+Préparer trois scènes : terminal seul, navigateur seul, puis terminal et navigateur côte à côte. Ajouter des captures de fenêtre pour le terminal et une fenêtre de navigateur dédiée au projet. Garder Codex et les notes dans une autre fenêtre.
+
+Un changement d'onglet du navigateur capturé apparaît dans la vidéo. Pour recadrer une source, utiliser « Transformer → Modifier la transformation ». Faire un essai de vingt secondes en changeant de fenêtre, puis vérifier l'enregistrement, le micro et la lisibilité des JSON et des résultats.

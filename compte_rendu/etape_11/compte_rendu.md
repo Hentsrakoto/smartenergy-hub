@@ -1,5 +1,7 @@
 # Étape 11 — Observabilité et supervision
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-29. Validation explicite de l'étape 10 enregistrée avant cette intervention. Travail individuel, skill rules appliqué. Rapport conservé dans le dépôt du PC actuel, comme les étapes précédentes.
 
 ## Objectif et plan réalisé

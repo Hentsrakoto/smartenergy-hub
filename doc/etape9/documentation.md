@@ -1,14 +1,10 @@
 # Étape 9 — Calculer les indicateurs et détecter les anomalies
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape8/documentation.md) · [Étape suivante](../etape10/documentation.md)
 
 ## Des résultats que l'on peut vérifier à la main
 
-Le niveau descriptif du guide demande moyenne, minimum, maximum, énergie estimée, nombre de mesures et nombre de dépassements. Ces calculs utilisent les mesures Cassandra et les seuils du capteur enregistrés dans MongoDB. Ils sont exposés pour une période par l'API Analytics et conservés par jour dans les résumés MongoDB.
+Le niveau descriptif du guide demande moyenne, minimum, maximum, énergie estimée, nombre de mesures et nombre de dépassements. Ces calculs sont regroupés dans le service Analytics. Ils utilisent les mesures Cassandra et les seuils du capteur enregistrés dans MongoDB. Ils sont exposés pour une période par l'API Analytics et conservés par jour dans les résumés MongoDB.
 
 La moyenne est arithmétique : elle ne pondère pas les puissances selon la durée entre les mesures. Pour l'énergie, les mesures sont triées chronologiquement et la puissance est supposée constante jusqu'à la suivante. Avec la puissance en kW et les durées en heures :
 
@@ -36,11 +32,11 @@ Les tests couvrent les seuils exacts, motifs multiples, température absente, hi
 
 ```bash
 python3 scripts/verify_analytics.py
-mvn -f storage-service/pom.xml -Dtest=AnalyticsServiceTest,DailySummaryServiceTest test
+mvn -f analytics-service/pom.xml -Dtest=AnalyticsServiceTest,DailySummaryServiceTest test
 ```
 
 Le script vérifie les réponses HTTP et les résultats attendus. Chaque lancement crée un capteur unique et conserve ses données.
 
 Une longue lacune est plafonnée à 24 h par intervalle. Ce choix limite l'extrapolation sans garantir l'énergie réellement consommée. Les mesures antérieures à `from` ne sont pas récupérées pour compléter le début de période. Une véritable prévision demanderait un jeu d'entraînement, une séparation temporelle, une comparaison à une référence et des erreurs MAE/RMSE ; ce travail n'a pas été réalisé.
 
-Sources : [politique de calcul](../../docs/analytics.md), [service Analytics](../../storage-service/src/main/java/com/smartenergy/storage/service/AnalyticsService.java), [calcul quotidien](../../storage-service/src/main/java/com/smartenergy/storage/mongo/service/DailySummaryService.java), [tests Analytics](../../storage-service/src/test/java/com/smartenergy/storage/service/AnalyticsServiceTest.java), [rapport daté de l'étape 9](../../compte_rendu/etape_9/compte_rendu.md).
+Sources : [politique de calcul](../../docs/analytics.md), [service Analytics](../../analytics-service/src/main/java/com/smartenergy/analytics/service/AnalyticsService.java), [calcul quotidien](../../analytics-service/src/main/java/com/smartenergy/analytics/mongo/service/DailySummaryService.java), [tests Analytics](../../analytics-service/src/test/java/com/smartenergy/analytics/service/AnalyticsServiceTest.java), [rapport daté de l'étape 9](../../compte_rendu/etape_9/compte_rendu.md).

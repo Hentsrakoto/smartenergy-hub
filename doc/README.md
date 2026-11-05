@@ -1,9 +1,8 @@
 # Documentation du projet de cours — SmartEnergy Hub
 
 **Auteur : Henintsoa Rakotonavalona**
-**Version documentaire : 4 novembre 2026**
 
-Ce dossier rassemble les documents destinés à la lecture et à l'évaluation du projet. Il suit les étapes du [guide de référence](../.agent/skills/rules/Projet_Complet_Spring_Boot_Guide.pdf), avec les adaptations définies dans le [skill rules](../.agent/skills/rules/SKILL.md). Le projet est individuel ; depuis la migration du 1er novembre 2026, les trois applications Spring Boot, le dashboard et les bases tournent dans Docker.
+Ce dossier rassemble les documents destinés à la lecture et à l'évaluation du projet. Il suit les étapes du [guide de référence](../.agent/skills/rules/Projet_Complet_Spring_Boot_Guide.pdf), avec les adaptations définies dans le [skill rules](../.agent/skills/rules/SKILL.md). Le projet est individuel ; les trois applications Spring Boot, le dashboard et les bases tournent dans Docker.
 
 Pour une première lecture, commencer par le [rapport de synthèse](rapport-projet.md), puis consulter les chapitres ci-dessous. Le [scénario de démonstration](../docs/course-demo.md) permet ensuite de vérifier les principales fonctions.
 
@@ -13,7 +12,7 @@ performances, commandes et supports](presentation-video/guide-10-minutes.md).
 Pour tourner sans lire tout le guide : [fiche OBS en quatre étapes](presentation-video/fiche-tournage-10-min.md),
 après la [préparation des preuves et fenêtres](presentation-video/preparation-tournage.md).
 
-**Migration du 1er novembre 2026 :** le [chapitre Docker et Analytics](migration-docker-analytics/documentation.md) complète les étapes historiques. Les applications sont désormais conteneurisées et les calculs regroupés dans Analytics ; les preuves antérieures gardent leur date et leur architecture d'exécution.
+**Organisation Docker et Analytics :** le [chapitre Docker et Analytics](migration-docker-analytics/documentation.md) complète les étapes historiques. Les applications sont désormais conteneurisées et les calculs regroupés dans Analytics ; les preuves de l'ancienne architecture restent distinctes des vérifications Docker.
 
 ## Lecture par étape
 
@@ -37,22 +36,22 @@ L'extension facultative de consultation possède son propre [chapitre front Stre
 
 ## Comment lire les preuves
 
-Les chapitres décrivent l'état actuel et précisent les dates des observations. Le bilan du 1er novembre comprend **94 tests Storage et 18 tests Collector**, ainsi que **trois tests Python des scripts complémentaires**. Les cinq tests du simulateur ont également été exécutés le 29 octobre ; ce sont des vérifications distinctes, pas un seul lancement global. Les résultats antérieurs restent cités avec leur date et leur périmètre.
+Les chapitres décrivent la version Docker avec Analytics séparé. Les suites de référence comptent **18 tests Collector, 100 Storage, 30 Analytics, 17 dashboard et 3 scripts**, soit 168 tests automatisés réussis. Les cinq tests du simulateur font l'objet d'une vérification distincte. Les [essais Docker conservés](../docs/performance.md) comparent 100 et 1 000 mesures, puis un et six clients. Les comptes rendus antérieurs conservent les résultats et le contexte de chaque essai.
 
 Les blocs « À reproduire » sont des procédures, pas la preuve d'une nouvelle exécution. Les essais qui écrivent des données créent ou conservent des capteurs de contrôle. Les mesures de performance sont des observations locales ; elles ne constituent pas un engagement de débit ou de latence.
 
 Les documents de travail n'ont pas été supprimés :
 
 - [`docs/`](../docs/README.md) contient les guides techniques, les contrats et les données brutes de performance.
-- [`compte_rendu/`](../compte_rendu/README.md) conserve les journaux datés, difficultés et résultats détaillés. Certaines sections décrivent l'ancienne machine ou un état ensuite complété.
+- [`compte_rendu/`](../compte_rendu/README.md) conserve les journaux de vérification, les difficultés et les résultats détaillés. Certaines sections décrivent l'ancienne machine ou un état ensuite complété.
 - [`docs/progress.md`](../docs/progress.md) conserve les validations de l'étudiant et l'historique du suivi.
 
 Les comptes rendus initiaux des étapes 0 à 4, mentionnés dans le suivi à un ancien chemin absolu, ne sont pas présents dans ce dépôt. Les chapitres de ces étapes s'appuient sur le code actuel, les fichiers de test, les statistiques conservées et les observations transcrites dans le suivi. Aucune capture ou sortie manquante n'a été recréée pour les besoins de la rédaction.
 
 ## Périmètre de la remise
 
-Le MVP comprend la collecte, le transport Redis, le stockage Cassandra/MongoDB, les API, les calculs descriptifs, les seuils, Docker, Actuator et les protections locales. Le dashboard, la prévision IA, Grafana/Prometheus et l'authentification restent des extensions non réalisées.
+Le MVP comprend la collecte, le transport Redis, le stockage Cassandra/MongoDB, les API, les calculs descriptifs, les seuils, Docker, Actuator et les protections locales. Le dashboard Streamlit est réalisé. La prévision IA, Grafana/Prometheus et l'authentification restent des extensions non réalisées.
 
-Les applications Spring Boot ne sont pas dockerisées, conformément à l'adaptation demandée dans le skill. Cassandra 4.1 correspond à la reprise autorisée sur le nouveau PC ; aucune nouvelle instance n'a été créée pendant la réorganisation documentaire.
+Collector, Storage, Analytics et Streamlit s'exécutent dans Docker, conformément à l'organisation retenue. Cassandra 4.1 et les volumes déjà présents sont conservés. Les procédures de démonstration préservent les conteneurs et les données existantes.
 
 La rédaction a été consolidée avec une assistance IA et une révision éditoriale utilisant le skill humanizer. Les résultats chiffrés viennent des preuves citées ; cette révision ne remplace pas leur vérification technique. La relecture du contenu par l'étudiant et un essai depuis un clone propre ou sur un autre PC restent à effectuer avant une remise définitive.

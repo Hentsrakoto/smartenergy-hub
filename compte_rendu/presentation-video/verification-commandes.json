@@ -1,0 +1,201 @@
+{
+  "sensorId": "doccheck-c216b5e55ecd",
+  "scope": "JSON de la fiche, identifiant de contrôle distinct pour préserver la prise vidéo",
+  "requests": [
+    {
+      "port": 8083,
+      "path": "/api/sensors",
+      "status": 201,
+      "body": {
+        "sensorId": "doccheck-c216b5e55ecd",
+        "name": "Capteur de demonstration video",
+        "building": "Projet de cours",
+        "floor": null,
+        "maxPowerKw": 5.0,
+        "active": true,
+        "tags": [],
+        "minVoltage": 210.0,
+        "maxVoltage": 250.0,
+        "maxTemperature": 45.0,
+        "samplingIntervalSeconds": 60,
+        "createdAt": "2026-11-05T17:19:08.274847539Z",
+        "updatedAt": "2026-11-05T17:19:08.274847539Z"
+      }
+    },
+    {
+      "port": 8081,
+      "path": "/api/measurements",
+      "status": 202,
+      "body": null
+    },
+    {
+      "port": 8081,
+      "path": "/api/measurements",
+      "status": 202,
+      "body": null
+    },
+    {
+      "port": 8081,
+      "path": "/api/measurements",
+      "status": 400,
+      "body": {
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Échec de validation des données de mesure",
+        "timestamp": "2026-11-05T17:19:08.411717362Z",
+        "fieldErrors": {
+          "powerKw": "La puissance active doit être positive ou nulle"
+        }
+      }
+    },
+    {
+      "port": 8084,
+      "path": "/api/sensors/doccheck-c216b5e55ecd/daily-summary?date=2026-11-01",
+      "status": 200,
+      "body": {
+        "sensorId": "doccheck-c216b5e55ecd",
+        "date": "2026-11-01",
+        "avgPowerKw": 4.75,
+        "maxPowerKw": 7.0,
+        "energyKwh": 0.158333,
+        "anomalyCount": 1,
+        "measurementCount": 2,
+        "minPowerKw": 2.5,
+        "updatedAt": "2026-11-05T17:19:08.300Z"
+      }
+    },
+    {
+      "port": 8083,
+      "path": "/api/measurements/doccheck-c216b5e55ecd/history?from=2026-11-01T12:00:00Z&to=2026-11-01T12:02:00Z",
+      "status": 200,
+      "body": [
+        {
+          "sensorId": "doccheck-c216b5e55ecd",
+          "day": "2026-11-01",
+          "measuredAt": "2026-11-01T12:01:00Z",
+          "powerKw": 7.0,
+          "voltage": 230.0,
+          "temperature": 22.0
+        },
+        {
+          "sensorId": "doccheck-c216b5e55ecd",
+          "day": "2026-11-01",
+          "measuredAt": "2026-11-01T12:00:00Z",
+          "powerKw": 2.5,
+          "voltage": 230.0,
+          "temperature": 22.0
+        }
+      ]
+    },
+    {
+      "port": 8083,
+      "path": "/api/measurements/doccheck-c216b5e55ecd/latest?day=2026-11-01",
+      "status": 200,
+      "body": {
+        "sensorId": "doccheck-c216b5e55ecd",
+        "day": "2026-11-01",
+        "measuredAt": "2026-11-01T12:01:00Z",
+        "powerKw": 7.0,
+        "voltage": 230.0,
+        "temperature": 22.0
+      }
+    },
+    {
+      "port": 8084,
+      "path": "/api/analytics/doccheck-c216b5e55ecd/summary?from=2026-11-01T12:00:00Z&to=2026-11-01T12:02:00Z",
+      "status": 200,
+      "body": {
+        "sensorId": "doccheck-c216b5e55ecd",
+        "from": "2026-11-01T12:00:00Z",
+        "to": "2026-11-01T12:02:00Z",
+        "measurementCount": 2,
+        "minPowerKw": 2.5,
+        "avgPowerKw": 4.75,
+        "maxPowerKw": 7.0,
+        "energyKwh": 0.158333,
+        "anomalyCount": 1
+      }
+    },
+    {
+      "port": 8084,
+      "path": "/api/analytics/doccheck-c216b5e55ecd/anomalies?from=2026-11-01T12:00:00Z&to=2026-11-01T12:02:00Z",
+      "status": 200,
+      "body": [
+        {
+          "measurement": {
+            "powerKw": 7.0,
+            "voltage": 230.0,
+            "temperature": 22.0,
+            "day": "2026-11-01",
+            "sensorId": "doccheck-c216b5e55ecd",
+            "measuredAt": "2026-11-01T12:01:00Z"
+          },
+          "reasons": [
+            "POWER_ABOVE_MAX"
+          ]
+        }
+      ]
+    },
+    {
+      "port": 8083,
+      "path": "/api/sensors/doccheck-c216b5e55ecd",
+      "status": 200,
+      "body": {
+        "sensorId": "doccheck-c216b5e55ecd",
+        "name": "Capteur de demonstration video",
+        "building": "Projet de cours",
+        "floor": null,
+        "maxPowerKw": 5.0,
+        "active": true,
+        "tags": [],
+        "minVoltage": 210.0,
+        "maxVoltage": 250.0,
+        "maxTemperature": 45.0,
+        "samplingIntervalSeconds": 60,
+        "createdAt": "2026-11-05T17:19:08.274Z",
+        "updatedAt": "2026-11-05T17:19:08.274Z"
+      }
+    }
+  ],
+  "invalidDoesNotPublish": {
+    "before": 3212,
+    "after": 3212
+  },
+  "cassandra": "\n measured_at                     | power_kw | voltage | temperature\n---------------------------------+----------+---------+-------------\n 2026-11-01 12:01:00.000000+0000 |        7 |     230 |          22\n 2026-11-01 12:00:00.000000+0000 |      2.5 |     230 |          22\n\n(2 rows)\n",
+  "mongo": "[\n  {\n    sensorId: 'doccheck-c216b5e55ecd',\n    measurementCount: Long('2'),\n    avgPowerKw: 4.75,\n    maxPowerKw: 7,\n    energyKwh: 0.158333,\n    anomalyCount: Long('1')\n  }\n]\n",
+  "redisGroup": "[{\"name\":\"storage-group\",\"consumers\":18,\"pending\":0,\"last-delivered-id\":\"1793899148282-0\",\"entries-read\":3212,\"lag\":0}]\n",
+  "success": true,
+  "testSuites": {
+    "collector-service": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "storage-service": {
+      "tests": 100,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "analytics-service": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "dashboard": {
+      "tests": 17,
+      "successful": true
+    },
+    "scripts": {
+      "tests": 3,
+      "successful": true
+    },
+    "simulator": {
+      "tests": 5,
+      "successful": true
+    }
+  },
+  "simulationProof": "simulation-2min-resultat.json"
+}

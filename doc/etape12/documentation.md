@@ -1,9 +1,5 @@
 # Étape 12 — Limiter les accès et protéger la configuration
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape11/documentation.md)
 
 ## Le niveau de protection retenu
@@ -14,17 +10,11 @@ Les fichiers `.env` et `.env.*`, sauf `.env.example`, sont ignorés par Git. Les
 
 ## Deux profils explicites
 
-| Réglage | local, par défaut | demo |
-| --- | --- | --- |
-| Collector | 0.0.0.0 pour le simulateur Docker, configurable | 127.0.0.1 |
-| Storage | 127.0.0.1 | 127.0.0.1 |
-| Actuator | Loopback, health/metrics | Identique |
-| Swagger/OpenAPI | Activé | Désactivé |
-| Diagnostics /api/storage/** | Désactivés, sauf activation volontaire | Désactivés |
+Le profil `docker`, actif dans Compose, fait écouter les applications sur 0.0.0.0 à l'intérieur de leurs conteneurs. Les ports publiés sur l'hôte sont limités à 127.0.0.1 : 8081, 8083, 8084 et 8501. Actuator reste interne sur 9080 et les images applicatives utilisent un utilisateur non privilégié. Swagger est disponible pour la démonstration.
 
-Le profil local permet la démonstration Docker, mais le bind du Collector l'ouvre aussi aux interfaces réseau de l'hôte. Un pare-feu adapté est donc nécessaire. `COLLECTOR_BIND_ADDRESS=127.0.0.1` convient aux essais uniquement hôte. Le profil demo fournit une présentation locale plus restreinte, sans Swagger.
+Les profils `local` et `demo` servent au débogage hors Docker. `local` conserve Swagger ; Collector peut alors écouter sur 0.0.0.0 pour les anciens scénarios. Utiliser `COLLECTOR_BIND_ADDRESS=127.0.0.1` pour le limiter à l'hôte. `demo` désactive Swagger et lie les API à la boucle locale. Ces profils ne doivent pas être combinés avec `docker`.
 
-Les variables doivent être exportées dans le terminal Maven de chaque application. Le fichier `.env` de Compose n'est pas chargé automatiquement par Spring. Ces profils sont des choix de déploiement ; un administrateur local peut les modifier ou les surcharger.
+Le fichier `.env` est interpolé par Compose, mais n'est pas chargé automatiquement par Maven. Les paramètres du mode hôte doivent être exportés dans les terminaux des applications. Ces réglages limitent l'accès réseau ; ils ne constituent pas une authentification.
 
 ## Endpoints sensibles et contrôles d'entrée
 
@@ -42,7 +32,7 @@ La recherche de signatures courantes de clés privées et de jetons dans l'histo
 
 ## À reproduire
 
-Dans chacun des deux dossiers de service, lancer `SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run`, puis depuis la racine :
+Le script historique ci-dessous vise Collector et Storage en mode hôte, avec leurs ports Actuator 9081/9083. Il n'est pas une vérification du profil Docker. Pour le rejouer, arrêter les applications Docker concernées afin de libérer les ports, puis lancer Collector et Storage avec `SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run` et Analytics avec le même profil sur 8084. Depuis la racine :
 
 ```bash
 python3 scripts/verify_security.py

@@ -1,6 +1,8 @@
 # Migration Docker et séparation Analytics
 
-État : validé par l'étudiant le 1er novembre 2026 ; implémentation en cours.
+> Document de travail daté, conservé pour retrouver les décisions initiales. Les procédures à utiliser et les résultats actuels sont regroupés dans le [sommaire du projet](../../../doc/README.md). Les anciennes cases non cochées ne remplacent pas les validations de `docs/progress.md`.
+
+État : architecture validée par l'étudiant le 1er novembre 2026 ; implémentation vérifiée le 4 novembre. Le corps de cette conception conserve le contexte initial.
 
 ## Demande et sources
 

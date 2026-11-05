@@ -12,7 +12,7 @@ Ce répertoire conserve les références techniques utilisées par ces chapitres
 | [Analytics](analytics.md) | Formules, règles et limites |
 | [Docker](docker-databases.md) | Démarrage, santé et persistance |
 | [Démonstration de cours](course-demo.md) | Préparation des capteurs, simulation et lectures |
-| [Performance](performance.md) | Méthode, commentaire et liens vers les JSON bruts |
+| [Performance](performance.md) | Résultats Docker du 5 novembre, protocole et JSON bruts |
 | [Observabilité](observability.md) | Ports Actuator et signification des métriques |
 | [Sécurité](security.md) | Profils, accès exposés et limites |
 | [Tests](tests.md) | Résultats datés et scénarios |

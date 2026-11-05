@@ -1,5 +1,7 @@
 # Compte rendu — étape 6 : MongoDB
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-26. Statut : **bloqué pour la validation réelle**. Le code des métadonnées et agrégats est en place ; l'image Docker `mongo:7.0` manque. Ce document distingue les contrôles exécutés des commandes à exécuter ultérieurement.
 
 ## Objectif et critère

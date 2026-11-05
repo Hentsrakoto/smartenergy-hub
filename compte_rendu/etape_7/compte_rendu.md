@@ -1,5 +1,7 @@
 # Compte rendu — Étape 7 : Storage Service et fiabilité
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 **Date de travail :** 2026-10-27
 **Statut :** En cours ; preuves techniques réunies et compte rendu déposé, validation par l'étudiant restante.
 

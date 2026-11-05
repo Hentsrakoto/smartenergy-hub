@@ -1,34 +1,32 @@
 # Étape 0 — Environnement et architecture
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape suivante](../etape1/documentation.md)
 
 ## Point de départ
 
 Le projet consiste à suivre des mesures énergétiques depuis des capteurs simulés jusqu'à leur consultation. Avant de développer les services, il fallait définir le rôle de chaque composant, vérifier les outils disponibles et éviter les conflits avec les autres projets du PC. Cette préparation correspond aux sections 6 à 8 du guide ; le skill la regroupe dans une étape 0.
 
-Le travail est individuel. Les services Spring Boot s'exécutent directement sur l'hôte ; Redis, MongoDB et Cassandra sont conteneurisés. Cette répartition est une adaptation explicite du guide, qui propose aussi des Dockerfiles pour les applications Java.
+Le travail est individuel. Collector, Storage, Analytics, le dashboard et les bases s'exécutent dans Docker. Le lancement sur l'hôte reste disponible pour le débogage. Cette organisation remplace l'adaptation initiale, à la suite de la décision du 1er novembre 2026 et des contrôles du 4 novembre.
 
 ## Architecture retenue
 
-Le simulateur envoie une mesure au Collector par HTTP. Le Collector la valide et la publie dans Redis Streams. Storage consomme ensuite l'événement, écrit la mesure dans Cassandra, met à jour le résumé MongoDB si le capteur est enregistré, puis acquitte le message Redis. Les routes de consultation et les calculs descriptifs sont intégrés à Storage : un troisième microservice Analytics n'a pas été ajouté.
+Le simulateur envoie une mesure au Collector par HTTP. Le Collector la valide et la publie dans Redis Streams. Storage consomme l'événement et écrit la mesure dans Cassandra. Pour un capteur enregistré, il demande à Analytics de recalculer le résumé MongoDB avant d'acquitter Redis.
 
-Cassandra répond aux requêtes temporelles par capteur et par jour. MongoDB conserve les métadonnées et les documents métier. Redis sert de file de travail entre réception et persistance ; il ne remplace pas les deux stockages.
+Cassandra conserve les séries temporelles. MongoDB conserve les capteurs, les agrégats et les rapports. Redis suit le travail à traiter. Le dashboard consulte les API Storage et Analytics.
 
-| Composant | Exécution | Adresse habituelle |
+| Composant | Exécution | Adresse depuis l'hôte |
 | --- | --- | --- |
-| Collector | Hôte | HTTP 8081 |
-| Storage et API de lecture | Hôte | 127.0.0.1:8083 |
-| Supervision Collector / Storage | Hôte | 127.0.0.1:9081 / 9083 |
+| Collector | Docker | 127.0.0.1:8081 |
+| Storage | Docker | 127.0.0.1:8083 |
+| Analytics | Docker | 127.0.0.1:8084 |
+| Dashboard | Docker | 127.0.0.1:8501 |
+| Actuator des trois services Java | Docker | 9080 interne à chaque conteneur, non publié |
 | Redis | Docker | 127.0.0.1:6380, port interne 6379 |
 | MongoDB | Docker | 127.0.0.1:27017 |
 | Cassandra | Docker | 127.0.0.1:9042 |
-| Simulateur | Docker, profil simulation | Collector via host.docker.internal |
+| Simulateur | Docker, profil simulation | Collector via collector-service:8080 |
 
-En profil local, Collector écoute par défaut sur 0.0.0.0 pour rester joignable depuis Docker. Le profil demo le limite à 127.0.0.1. Les conséquences de ce choix sont expliquées à l'[étape 12](../etape12/documentation.md).
+Le [chapitre de migration](../migration-docker-analytics/documentation.md) explique le passage de l'ancien mode hôte à cette organisation.
 
 ## Environnement vérifié
 

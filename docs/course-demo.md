@@ -1,6 +1,6 @@
 # Démonstration du projet de cours
 
-Ce scénario montre collecte, transit, stockage et détection par seuil. Il ne nécessite ni dashboard ni modèle IA. Les bases existantes sont conservées ; aucune réinitialisation.
+Ce scénario suit une mesure depuis la collecte jusqu'au stockage et à la détection par seuil. Il peut se réaliser au terminal, puis se compléter par le dashboard. Les bases existantes sont conservées.
 
 ## 1. Démarrer les dépendances et les applications
 
@@ -54,7 +54,7 @@ Un essai plus long de deux minutes reste possible avec le profil décrit dans le
 
 ## 4. Lire les résultats
 
-Ouvrir Swagger Collector `http://127.0.0.1:8081/swagger-ui/index.html` et Storage `http://127.0.0.1:8083/swagger-ui/index.html`. Les exemples étiquetés `cours` sont fictifs et n'insèrent pas de données à eux seuls. Utiliser `sensor-002` pour consulter les mesures du simulateur.
+Ouvrir Swagger Collector `http://127.0.0.1:8081/swagger-ui/index.html`, Storage `http://127.0.0.1:8083/swagger-ui/index.html` et Analytics `http://127.0.0.1:8084/swagger-ui/index.html`. Les exemples étiquetés `cours` sont fictifs et n'insèrent pas de données à eux seuls. Utiliser `sensor-002` pour consulter les mesures du simulateur.
 
 ```bash
 COURSE_DAY=$(date -u +%F)

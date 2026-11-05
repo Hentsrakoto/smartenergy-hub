@@ -1,5 +1,7 @@
 # Docker et Analytics Implementation Plan
 
+> Document de travail daté, conservé pour retrouver les décisions initiales. Les procédures à utiliser et les résultats actuels sont regroupés dans le [sommaire du projet](../../../doc/README.md). Les anciennes cases non cochées ne remplacent pas les validations de `docs/progress.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Conteneuriser les applications et centraliser les calculs dans Analytics sans perdre la fiabilité Redis ni les données.

@@ -24,17 +24,17 @@ L'essai du 1er novembre a aussi montré des tentatives supplémentaires de trait
 
 ## À reproduire
 
-Arrêter uniquement le processus Storage lancé pour l'essai avec Ctrl+C, laisser Collector actif et envoyer quelques mesures avec le simulateur. Lire ensuite :
+Sur la version Docker, arrêter uniquement Storage avec `docker --context default stop smartenergy-storage`. Laisser Collector actif et envoyer quelques mesures avec le simulateur. Lire ensuite :
 
 ```bash
 docker compose exec -T smartenergy-redis redis-cli XINFO GROUPS energy-measurements
 docker compose exec -T smartenergy-redis redis-cli XPENDING energy-measurements storage-group
 ```
 
-Relancer Storage sur l'hôte :
+Relancer le conteneur existant, sans recréer ses dépendances :
 
 ```bash
-mvn -f storage-service/pom.xml spring-boot:run
+docker --context default start smartenergy-storage
 ```
 
 Vérifier les comptes des capteurs concernés dans les bases et attendre le retour du lag et de pending à zéro. Une PEL vide seule ne prouve pas que les valeurs métier sont correctes.

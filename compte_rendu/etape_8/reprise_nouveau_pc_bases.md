@@ -1,5 +1,7 @@
 # Reprise sur le nouveau PC — bases et chaîne applicative
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-27. Périmètre : remettre en service les dépendances du projet et vérifier les services existants ; les nouveaux endpoints de l'étape 8, Swagger et Analytics restent à faire. Les preuves historiques des étapes 5 à 7 concernent la machine précédente et ne remplacent pas cette reprise.
 
 ## Environnement et contraintes

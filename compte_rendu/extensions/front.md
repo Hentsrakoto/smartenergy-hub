@@ -1,5 +1,7 @@
 # Extension front — compte rendu du 1er novembre 2026
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 ## Demande et décisions
 
 L'étudiant a demandé deux extensions dans cet ordre : front, puis régression ML.

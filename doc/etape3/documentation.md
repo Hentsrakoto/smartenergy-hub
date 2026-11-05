@@ -20,7 +20,7 @@ Les réponses de validation indiquent les champs en erreur. Les paramètres Spri
 
 Les essais réels du 27 octobre ont confirmé une réponse 202 suivie d'une ligne Cassandra et d'un résumé MongoDB. Un essai invalide a laissé `XLEN` à 20 avant et après l'appel, ce qui montre que le rejet n'a pas ajouté d'événement. Ce compte est une observation datée, pas la longueur actuelle du stream.
 
-Le 1er novembre, l'essai final de performance a envoyé 30 puis 300 mesures : toutes ont été acceptées en 202 et retrouvées dans le stockage. Les tests Collector, au nombre de 18 pour l'ensemble du module, ont également réussi après enrichissement du contrat OpenAPI.
+Le 1er novembre, l'essai final de performance a envoyé 30 puis 300 mesures : toutes ont été acceptées en 202 et retrouvées dans le stockage. Les tests Collector, au nombre de 18 pour l'ensemble du module, ont également réussi après enrichissement du contrat OpenAPI. Les [relevés Docker du 5 novembre](../../docs/performance.md) complètent cet essai historique avec des lots de 100 et 1 000 mesures.
 
 ## À reproduire
 

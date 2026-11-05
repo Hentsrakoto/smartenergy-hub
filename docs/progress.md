@@ -4,10 +4,15 @@ Ce document recense l'état d'avancement de chaque étape du projet conformémen
 
 ## Migration Docker / Analytics — contrôles du 2026-11-04
 
-**Préparation vidéo :** [guide de dix minutes](../doc/presentation-video/guide-10-minutes.md)
-ajouté. Les benchmarks de l'architecture Docker restent à réaliser ; les chiffres
-du 1er novembre décrivent la version antérieure. Aucun nouveau test de charge
-n'a été exécuté pendant cet audit documentaire.
+**Mise à jour documentaire du 5 novembre :** les [relevés Docker](performance.md) sont disponibles : 100 et 1 000 mesures avec un client, puis 1 000 avec six clients. Le [nouvel essai de panne/reprise](../compte_rendu/presentation-video/verification-video.json) indique onze contrôles réussis. Ces fichiers ont été lus pendant la révision ; aucun scénario n'a été relancé pour la documentation.
+
+- [x] Résultats Docker intégrés au rapport, aux chapitres et à la fiche vidéo.
+- [x] Anciennes procédures hôte distinguées du mode Docker actuel.
+- [x] Révision éditoriale avec humanizer ; preuves historiques conservées.
+- [x] README et supports de tournage harmonisés sur le fonctionnement actuel ; dates de rédaction retirées, horodatages des données et preuves préservés.
+- [x] Fiche Swagger avec JSON et paramètres complets ; génération du journal de simulation explicitée ; 295 mesures simulées et relues ; dossiers facultatifs sans implémentation retirés. [Contrôles de la fiche](../compte_rendu/presentation-video/verification-commandes.md).
+- [ ] Répétitions des benchmarks et contrôle direct final du drainage à conserver.
+- [ ] Répétition de la vidéo de dix minutes et essai sur un clone propre.
 
 **Architecture validée ; réalisation techniquement vérifiée, à relire par l'étudiant.**
 
@@ -23,7 +28,7 @@ n'a été exécuté pendant cet audit documentaire.
 
 ## Extensions — 2026-11-01
 
-- **Front Streamlit : En cours — à valider par l'étudiant.** Interface de consultation ajoutée, 15 tests réussis et lecture des données existantes vérifiée en navigateur (desktop et 375 px). Contrôles et limites dans `doc/extensions/front/documentation.md` et `compte_rendu/extensions/front.md`.
+- **Front Streamlit : réalisé et vérifié ; relecture de l'étudiant encore attendue.** Le bilan initial ci-dessous date du 1er novembre : interface de consultation ajoutée, 15 tests réussis et lecture des données existantes vérifiée en navigateur (desktop et 375 px). Contrôles et limites dans `doc/extensions/front/documentation.md` et `compte_rendu/extensions/front.md`.
 - **Régression ML : À faire.** Deuxième extension demandée, après validation du front. Prévoir séparation chronologique entraînement/validation/test, baseline, MAE et RMSE ; aucun modèle entraîné à ce stade.
 
 **Légende des statuts :**
@@ -53,6 +58,10 @@ n'a été exécuté pendant cet audit documentaire.
 | **Étape 12**| Sécurité & Durcissement (.env, validation entrées, profils) | **Validé** | 2026-10-29 | Audit ciblé, profils et protections vérifiés ; Storage 93 tests, Collector 18 ; validation explicite de l'étudiant le 2026-10-29, limites docs/security.md |
 
 ---
+
+## Historique des étapes — configurations et résultats de leur date
+
+Les sections suivantes conservent le suivi initial. Les anciens chemins, les ports Actuator hôte et les noms de fichiers ne sont pas des instructions pour la version Docker actuelle. Les tableaux de validation gardent les accords déjà donnés par l'étudiant.
 
 ## Détail des critères de validation de l'Étape 0
 - [x] Inspection du système hôte (Java 17, Maven 3.8.7, Python 3.12, Docker).
@@ -124,7 +133,7 @@ n'a été exécuté pendant cet audit documentaire.
 - [x] Compte-rendu d'étape rédigé dans `/home/hents/Documents/code/techweb2/compte_rendu/etape_5/compte_rendu.md`.
 
 ---
-*Dernière mise à jour : 2026-11-01*
+*Historique ci-dessous : compléments du 1er novembre ; révision documentaire actuelle : 5 novembre 2026.*
 
 ## Compléments de l'audit PDF — projet de cours, 2026-11-01
 

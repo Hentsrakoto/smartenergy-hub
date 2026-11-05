@@ -1,5 +1,7 @@
 # Étape 8 — API de consultation, 29 octobre 2026
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 ## Réalisation
 
 `LatestMeasurementService` utilise les résumés MongoDB comme index des jours du capteur enregistré, puis lit la dernière mesure Cassandra du jour le plus récent. La route avec `day` est conservée pour les séries sans métadonnées. `AnalyticsService`, ses DTO et `AnalyticsController` exposent résumé et anomalies sur 31 jours maximum. Les seuils actuels sont utilisés ; l'énergie est bornée par `to`. Les deux services exposent OpenAPI et Swagger via springdoc 2.6.0 (compatible Boot 3.3.x).

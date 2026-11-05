@@ -38,7 +38,7 @@ La réponse attendue est 202 après publication Redis. Le même appel avec `powe
 
 ## Vérifications conservées
 
-Le suivi du 20 octobre rapporte 15 tests pour le contrat et les premières routes. Le 1er novembre, la suite complète Collector comptait 18 tests réussis, sans échec ni erreur ; ce chiffre comprend aussi la publication et OpenAPI. Ce ne sont donc pas 18 tests du seul DTO.
+Le suivi du 20 octobre rapporte 15 tests pour le contrat et les premières routes. Le 4 novembre, la suite complète Collector comptait 18 tests réussis, sans échec ni erreur ; ce chiffre comprend aussi la publication et OpenAPI. Ce ne sont donc pas 18 tests du seul DTO.
 
 À reproduire depuis la racine :
 

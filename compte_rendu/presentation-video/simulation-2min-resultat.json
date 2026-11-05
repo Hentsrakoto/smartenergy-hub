@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-11-05T17:13:08.26739048Z",
+  "finishedAt": "2026-11-05T17:15:09.903805292Z",
+  "exitCode": 0,
+  "measurements": {
+    "sensor-001": 59,
+    "sensor-002": 59,
+    "sensor-003": 59,
+    "sensor-004": 59,
+    "sensor-005": 59
+  },
+  "totalStoredInWindow": 295,
+  "sensor002AboveConfiguredPowerThreshold": 10,
+  "durationSeconds": 120.5,
+  "totalSent": 295,
+  "accepted": 295,
+  "rejected": 0,
+  "transportErrors": 0,
+  "logSha256": "0de8cdc31d0f4014743730fe585711c9b1eb3b004efbd852489bfec8c17119d0",
+  "success": true
+}

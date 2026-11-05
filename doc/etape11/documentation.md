@@ -1,14 +1,10 @@
 # Étape 11 — Observer la santé et les temps de traitement
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape10/documentation.md) · [Étape suivante](../etape12/documentation.md)
 
 ## Voir ce que font les services
 
-Actuator est activé dans Collector et Storage. La santé indique si les composants auto-configurés répondent ; les métriques permettent de suivre les requêtes et les tentatives de persistance. Les endpoints sont exposés sur des ports distincts liés à 127.0.0.1 : 9081 pour Collector et 9083 pour Storage. Seuls `health` et `metrics` sont exposés et les détails de santé restent masqués.
+Actuator est activé dans Collector, Storage et Analytics. Dans Docker, chaque service expose `health` et `metrics` sur son port interne 9080, sans publication sur l'hôte. La santé reste sans détails internes. Les métriques suivent les requêtes HTTP, les tentatives de persistance et les messages livrés mais non acquittés.
 
 | Instrument | Interprétation |
 | --- | --- |
@@ -43,11 +39,12 @@ Le protocole est local, avec les bases sur le même PC et sans isolation de benc
 
 ## À reproduire
 
+Pour la version Docker, utiliser les commandes de [supervision interne](../../docs/observability.md). Les [mesures du 5 novembre](../../docs/performance.md) comparent 100 et 1 000 mesures avec un client, puis 1 000 avec six clients. Les lots sont intégralement retrouvés ; le débit 202 du grand lot à six clients atteint 261.240/s dans cet essai local.
+
 ```bash
-python3 scripts/verify_observability.py
-python3 scripts/measure_performance.py --output /tmp/smartenergy-performance.json
+python3 scripts/video_results.py --performance docs/performance/video-docker-1-client-01.json docs/performance/video-docker-6-clients-01.json
 ```
 
-Les deux services doivent tourner sur l'hôte et les bases être disponibles. Arrêter les autres essais avant la mesure. Prometheus et Grafana ne sont pas implémentés : le PDF les présente comme des extensions, alors que santé et métriques utiles constituent le minimum demandé.
+Cette commande lit les relevés sauvegardés ; elle ne génère aucune charge. Pour refaire l'essai, suivre le protocole de performance et conserver un nouveau nom de fichier. Prometheus et Grafana restent des extensions non implémentées.
 
-Sources : [instruments et commandes](../../docs/observability.md), [timer de persistance](../../storage-service/src/main/java/com/smartenergy/storage/service/CassandraPersistenceService.java), [jauge Redis](../../storage-service/src/main/java/com/smartenergy/storage/config/StreamMetrics.java), [preuve nominale](../../compte_rendu/etape_11/compte_rendu.md), [protocole et résultats de charge](../../docs/performance.md), [relevé JSON final](../../docs/performance/2026-11-01-final.json).
+Sources : [instruments et commandes](../../docs/observability.md), [timer de persistance](../../storage-service/src/main/java/com/smartenergy/storage/service/CassandraPersistenceService.java), [jauge Redis](../../storage-service/src/main/java/com/smartenergy/storage/config/StreamMetrics.java), [preuve nominale](../../compte_rendu/etape_11/compte_rendu.md), [protocole et résultats](../../docs/performance.md).

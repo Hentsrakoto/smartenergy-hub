@@ -1,5 +1,7 @@
 # Préparation de la fiche de tournage — 4 novembre 2026
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 ## Demande
 
 Préparer une présentation vidéo de dix minutes, organisée dans l'ordre du PDF,

@@ -16,6 +16,9 @@ Pour lire la documentation du projet dans l'ordre du PDF, utiliser le [sommaire 
 | Compléments | [Charge, capteurs, Swagger et documentation du 1er novembre](complements/2026-11-01.md) |
 | Réorganisation | [Classement documentaire et révision humanizer](complements/2026-11-01-documentation.md) |
 | Migration Docker/Analytics | [Architecture, commandes et contrôles du 4 novembre](migration-docker-analytics/rapport.md) |
+| Vérification de la fiche | [Commandes, JSON Swagger et simulation complète](presentation-video/verification-commandes.md) |
+| Préparation vidéo | [Fiche et commandes préparées le 4 novembre](presentation-video/preparation.md), [nouvelle preuve du 5 novembre](presentation-video/verification-video.json) |
+| Révision du 5 novembre | [Mise à jour et contrôles documentaires](complements/2026-11-05-documentation.md) |
 
 Certains journaux mentionnent l'ancien PC, Cassandra 4.0, des fonctionnalités alors absentes ou un état provisoire bloqué. La reprise, les compléments et les chapitres actuels expliquent la suite. Ces formulations historiques ne doivent pas être prises pour l'état final de l'application.
 

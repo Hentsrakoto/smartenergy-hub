@@ -28,13 +28,13 @@ Le 29 octobre, les cinq tests du simulateur ont réussi. Le 1er novembre, un ess
 
 ## À reproduire
 
-Avec les deux services démarrés en profil local :
+Avec Collector, Storage et Analytics démarrés dans Docker :
 
 ```bash
 python3 scripts/prepare_demo.py
 docker compose --profile simulation build smartenergy-simulator
 docker compose --profile simulation run --no-deps smartenergy-simulator \
-  --config config.json --url http://host.docker.internal:8081/api/measurements \
+  --config config.json --url http://collector-service:8080/api/measurements \
   --duration 120
 ```
 

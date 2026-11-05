@@ -1,5 +1,7 @@
 # Réorganisation documentaire du projet de cours
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 1er novembre 2026. La demande porte sur le classement et la rédaction des documents à évaluer. Elle ne demande pas de relancer les essais ni de modifier l'application.
 
 ## Organisation retenue

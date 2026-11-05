@@ -1,14 +1,10 @@
 # Étape 7 — Fiabiliser le Storage Service
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape6/documentation.md) · [Étape suivante](../etape8/documentation.md)
 
 ## Ordre du traitement
 
-Storage reçoit un événement Redis, vérifie sa structure, écrit la mesure dans Cassandra, recalcule le résumé MongoDB si le capteur est enregistré, puis acquitte l'événement. L'acquittement n'est pas envoyé lorsqu'une écriture requise échoue. Le consumer traite les événements suivants même si l'un d'eux est invalide.
+Storage reçoit un événement Redis, vérifie sa structure, écrit la mesure dans Cassandra, demande le recalcul du résumé à Analytics si le capteur est enregistré, puis acquitte l'événement. L'acquittement n'est pas envoyé lorsqu'une écriture requise échoue. Le consumer traite les événements suivants même si l'un d'eux est invalide.
 
 Il n'existe pas de transaction distribuée commune aux trois bases. Une panne peut donc survenir après l'écriture Cassandra et avant la mise à jour MongoDB ou XACK. La reprise doit pouvoir rejouer le traitement sans additionner une seconde fois la même mesure.
 
@@ -16,7 +12,7 @@ Il n'existe pas de transaction distribuée commune aux trois bases. Une panne pe
 
 La clé Cassandra complète identifie une mesure de façon stable. Le résumé MongoDB est recalculé depuis les lignes Cassandra et enregistré sous `sensorId:date`, au lieu d'ajouter aveuglément une valeur à un total. Un rejeu réécrit ainsi la ligne et le document correspondants.
 
-Le consumer et la reprise PEL peuvent fonctionner en parallèle. Un verrou local par capteur/jour protège la séquence d'écriture et de recalcul dans la même JVM. Il ne coordonne pas plusieurs instances Storage ; cette limite doit être prise en compte avant un déploiement distribué plus large.
+Le consumer et la reprise PEL peuvent fonctionner en parallèle. Storage sérialise localement la séquence d'écriture et d'appel Analytics. Analytics possède aussi un verrou local par capteur/jour autour de la lecture, du calcul et de la sauvegarde du résumé. Ces verrous ne coordonnent pas plusieurs répliques ; le Compose fourni utilise une instance de chaque service.
 
 Une entrée Redis malformée reste en PEL pour inspection. Le MVP ne la supprime pas automatiquement et ne possède pas de file dédiée aux messages définitivement invalides.
 
@@ -41,6 +37,6 @@ python3 scripts/verify_analytics.py
 mvn -f storage-service/pom.xml test
 ```
 
-Le 1er novembre, les 94 tests de l'ensemble Storage ont réussi. Ils couvrent notamment l'ordre des écritures, les erreurs, le rejeu et la sérialisation locale. Les scénarios de panne ci-dessus sont des essais réels datés, distincts des tests avec mocks.
+Le 4 novembre, les 100 tests de Storage et les 30 tests d'Analytics ont réussi. Le [nouvel essai du 5 novembre](../../compte_rendu/presentation-video/verification-video.json) confirme aussi la reprise après une panne Analytics avec un message conservé en PEL. Ils couvrent notamment l'ordre des écritures, les erreurs, le rejeu et la sérialisation locale. Les scénarios de panne ci-dessus sont des essais réels datés, distincts des tests avec mocks.
 
 Sources : [orchestration de persistance](../../storage-service/src/main/java/com/smartenergy/storage/service/CassandraPersistenceService.java), [consumer](../../storage-service/src/main/java/com/smartenergy/storage/service/RedisStreamConsumer.java), [tests de persistance](../../storage-service/src/test/java/com/smartenergy/storage/service/CassandraPersistenceServiceTest.java), [commandes et preuves complètes de panne](../../compte_rendu/etape_7/compte_rendu.md).

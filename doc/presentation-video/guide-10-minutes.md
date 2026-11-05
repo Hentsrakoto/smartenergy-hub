@@ -1,20 +1,18 @@
 # Préparer la vidéo de 10 minutes — SmartEnergy Hub
 
-**Pendant OBS :** utiliser la [fiche courte en quatre étapes](fiche-tournage-10-min.md).
+**Pendant OBS :** utiliser la [fiche en quatre étapes avec les JSON Swagger](fiche-tournage-10-min.md).
 Les commandes à exécuter avant la prise sont regroupées dans la
 [préparation du tournage](preparation-tournage.md). Ce guide conserve les explications détaillées.
 
-État vérifié le 4 novembre 2026. La durée de dix minutes vient de la nouvelle
-consigne de l'enseignant ; le PDF ne donne pas cette durée. Ce document prépare
-la vidéo et les essais : aucun nouveau benchmark n'a été exécuté pour le rédiger.
+La durée de dix minutes vient de la consigne de l'enseignant ; le PDF ne fixe pas cette durée. Les relevés Docker et la preuve de panne sont disponibles. Les commandes de présentation lisent ces fichiers sans relancer les essais.
 
 ## Ce qui reste à terminer
 
 | Priorité | Travail | Pourquoi |
 | --- | --- | --- |
-| 1 | Mesurer les performances de la version Docker avec Analytics séparé | Les relevés actuels datent d'avant la migration |
-| 2 | Synthétiser les résultats dans un tableau et expliquer les écarts | PDF §13.2 et §20.2 : lecture sur jeu plus important et observation sous charge |
-| 3 | Répéter la vidéo avec des commandes préparées et des preuves datées | Montrer un parcours complet sans passer dix minutes à compiler |
+| 1 | Si le temps le permet, répéter les deux configurations et sauvegarder le drainage Redis | Une première exécution de chaque configuration est disponible ; le lag final n'est pas enregistré |
+| 2 | Préparer le commentaire du tableau de performance déjà rempli | Distinguer débit 202, délai du résumé, temps de lecture et variations entre essais |
+| 3 | Répéter la vidéo avec des commandes préparées et des preuves sauvegardées | Montrer un parcours complet sans passer dix minutes à compiler |
 | 4 | Essayer le démarrage depuis un clone propre ou une autre machine | Critère d'exécution reproductible du §19.2 encore non vérifié indépendamment |
 | 5 | Relire le rapport et figer une version du dépôt pour la remise | Le code, les résultats et la vidéo doivent correspondre |
 
@@ -25,30 +23,11 @@ distinction mesure invalide/anomalie. Le PDF les demande aussi dans le rapport.
 
 ## Volumes et chiffres disponibles
 
-Lecture ponctuelle des bases pendant cet audit :
+Les preuves de référence comparent 100 puis 1 000 mesures avec un client, puis un autre lot de 1 000 avec six clients. Chaque lot retrouve le nombre attendu dans le résumé et l'historique. Le [rapport de performance](../../docs/performance.md) reprend toutes les phases et leurs limites.
 
-- **710 lignes Cassandra**, mesures brutes présentes dans toute la table.
-- **711 entrées Redis**, événements du stream, pas nécessairement mesures uniques.
-- **15 fiches MongoDB de capteurs**, dont des capteurs de tests et de performance.
-- **693 mesures additionnées dans les résumés MongoDB** des capteurs enregistrés.
-- Groupe Redis : pending=0 et lag=0.
+Les nombres globaux de lignes Cassandra, d'entrées Redis et de fiches MongoDB évoluent à chaque essai. Ils ont aussi des périmètres différents : une entrée Redis peut être un rejeu, et une mesure brute d'un capteur inconnu n'a pas forcément de résumé. Pour vérifier un essai, comparer les comptes du même capteur et de la même période.
 
-Ces compteurs ont des périmètres différents. Les résumés disponibles ne constituent
-pas un décompte de toutes les mesures brutes, notamment celles de capteurs sans
-métadonnées ou sans résumé. Pour prouver l'absence de perte dans un essai, comparer
-les comptes du même capteur et du même jour, comme le fait le script de benchmark.
-Le COUNT global a été fait sur ce petit jeu local ; sur une grosse table Cassandra,
-privilégier des lectures par partition plutôt qu'un balayage global.
-
-Suites réussies lors des contrôles du 4 novembre : 18 tests Collector, 100 Storage,
-30 Analytics, 17 dashboard et 3 scripts, soit **168 tests automatisés**. Le scénario
-Docker réel est une preuve supplémentaire, distincte de ces suites.
-
-Ancien relevé du 1er novembre : 30 puis 300 mesures, toutes retrouvées. Sur le grand
-lot : 206,978 acceptations/s, p95 POST 50,248 ms, disponibilité du résumé complet
-à 8,207 s et moyenne lecture REST 29,532 ms. **Ces valeurs ne décrivent pas les
-performances de l'architecture migrée**. Le relevé changeait aussi le nombre de
-clients entre les deux volumes ; il n'isolait pas l'effet du volume.
+Les suites de référence comptent 18 tests Collector, 100 Storage, 30 Analytics, 17 dashboard et 3 scripts, soit **168 tests automatisés réussis**. Le scénario Docker réel complète ces suites.
 
 ## Combien de mesures préparer
 
@@ -99,8 +78,8 @@ vérifier la persistance. Ne pas attribuer au dernier lancement tout le total du
 ## Benchmark adapté à Docker
 
 Actuator n'est plus publié sur les ports hôte 9081/9083. Le script peut s'exécuter
-dans le conteneur dashboard, qui dispose de Python et du réseau interne. Sa ligne
-de commande a été vérifiée avec --help, sans injecter de charge pendant cet audit.
+dans le conteneur dashboard, qui dispose de Python et du réseau interne. Les deux premières exécutions sont conservées dans les JSON suffixés 01. Les
+commandes suivantes utilisent 02 pour les préserver.
 
 Arrêter les autres injections et ne pas lancer Maven en parallèle. Premier essai,
 volume comparé à concurrence constante :
@@ -112,7 +91,7 @@ docker --context default compose exec -T dashboard python - \
   --management http://storage-service:9080 \
   --collector-management http://collector-service:9080 \
   --small 100 --large 1000 --workers 1 --reads 30 --deadline 300 \
-  < scripts/measure_performance.py > docs/performance/video-docker-1-client-01.json
+  < scripts/measure_performance.py > docs/performance/video-docker-1-client-02.json
 ```
 
 Deuxième essai, grand lot avec six clients :
@@ -124,12 +103,11 @@ docker --context default compose exec -T dashboard python - \
   --management http://storage-service:9080 \
   --collector-management http://collector-service:9080 \
   --small 100 --large 1000 --workers 6 --reads 30 --deadline 300 \
-  < scripts/measure_performance.py > docs/performance/video-docker-6-clients-01.json
+  < scripts/measure_performance.py > docs/performance/video-docker-6-clients-02.json
 ```
 
 Les fichiers sont écrits sur l'hôte grâce à la redirection. Chaque exécution crée
-deux capteurs uniques et conserve leurs mesures. Pour répéter, remplacer 01 par
-02 puis 03 afin de garder les résultats. Le processus doit terminer avec le code
+deux capteurs uniques et conserve leurs mesures. Pour une troisième exécution, utiliser le suffixe 03 afin de garder les résultats. Le processus doit terminer avec le code
 0 et produire un JSON complet ; un fichier vide ou une exception n'est pas un
 résultat de performance utilisable.
 
@@ -140,13 +118,15 @@ python3 -m json.tool docs/performance/video-docker-1-client-01.json
 python3 -m json.tool docs/performance/video-docker-6-clients-01.json
 ```
 
-Dans le rapport de performance, remplir ce tableau avec les mesures obtenues :
+Les résultats Docker sont déjà synthétisés dans le [rapport de performance](../../docs/performance.md). Voici les trois configurations principales ; le rapport conserve également le second petit lot pour montrer la variation entre deux exécutions identiques.
 
-| Configuration | Acceptées / stockées | Débit 202 /s | POST p95 ms | Résumé complet s | Lecture moyenne / p95 ms | pending / lag final |
-| --- | --- | --- | --- | --- | --- | --- |
-| 100 mesures, 1 client | À mesurer | À mesurer | À mesurer | À mesurer | À mesurer | À vérifier |
-| 1 000 mesures, 1 client | À mesurer | À mesurer | À mesurer | À mesurer | À mesurer | À vérifier |
-| 1 000 mesures, 6 clients | À mesurer | À mesurer | À mesurer | À mesurer | À mesurer | À vérifier |
+| Configuration | Acceptées / stockées | Débit 202 /s | POST p95 ms | Résumé complet s | Lecture moyenne / p95 ms |
+| --- | --- | --- | --- | --- | --- |
+| 100 mesures, 1 client, essai A | 100 / 100 | 55.218 | 25.352 | 5.107 | 16.223 / 29.993 |
+| 1 000 mesures, 1 client, essai A | 1 000 / 1 000 | 121.208 | 16.659 | 27.726 | 36.759 / 47.643 |
+| 1 000 mesures, 6 clients, essai B | 1 000 / 1 000 | 261.240 | 44.376 | 22.021 | 24.311 / 28.595 |
+
+Les échantillons PEL finaux des grands lots valent 10 et 7. Le lag final n'est pas enregistré dans ces fichiers. Ne pas leur attribuer rétrospectivement un état pending=0/lag=0.
 
 Le débit du script est celui des **acceptations HTTP 202**, pas le débit de
 persistance finale. Le délai completion_wall_seconds va du début du lot à la
@@ -181,14 +161,20 @@ python3 -m unittest discover -s scripts -p 'test_*.py' -v
 Ces commandes de tests demandent les outils de développement sur l'hôte ; le
 démarrage des applications Docker n'en dépend pas.
 
-Le contrôle de panne crée des données distinctes, arrête Analytics puis le
-redémarre et finit par redémarrer les applications. Le faire séparément du
-benchmark, avant de filmer, et présenter son résultat JSON :
+La preuve Docker sauvegardée peut être présentée sans refaire la panne :
 
 ```bash
-python3 scripts/verify_docker_migration.py --output compte_rendu/migration-docker-analytics/verification-video.json
-python3 -m json.tool compte_rendu/migration-docker-analytics/verification-video.json
+python3 -m json.tool compte_rendu/presentation-video/verification-video.json
 ```
+
+Pour répéter le scénario, utiliser un nouveau fichier :
+
+```bash
+python3 scripts/verify_docker_migration.py --output compte_rendu/presentation-video/verification-video-02.json
+```
+
+Le contrôle crée des données distinctes, arrête Analytics, le rétablit puis
+redémarre les applications. Le lancer séparément du benchmark, avant de filmer.
 
 Il ne teste pas une panne sous charge soutenue. Les anciens comptes rendus
 contiennent aussi la panne Storage demandée dans le tableau du PDF §22.4 ; ne pas
@@ -212,7 +198,7 @@ mesures uniques ; les métriques en mémoire sont remises à zéro au redémarra
 | [Sommaire par étape](../README.md) | Dossier documentaire d'évaluation |
 | [Architecture](../../docs/architecture.md) et [migration](../migration-docker-analytics/documentation.md) | Rôles des composants, Docker et fiabilité |
 | [API](../../docs/api.md) et Swagger des trois services | Contrats et démonstration de lecture |
-| [Tests](../../docs/tests.md) et [preuve de migration](../../compte_rendu/migration-docker-analytics/rapport.md) | Résultats datés et scénarios réels |
+| [Tests](../../docs/tests.md) et [preuve de migration](../../compte_rendu/migration-docker-analytics/rapport.md) | Résultats vérifiés et scénarios réels |
 | [Performance](../../docs/performance.md) et nouveaux JSON | Protocole, tableau et commentaires des nouveaux essais |
 | [Sécurité](../../docs/security.md) | Ports, secrets, profils et limites |
 | README, Compose, Dockerfiles, CQL et simulateur | Reproduction du projet à partir du dépôt |
@@ -221,22 +207,22 @@ Préparer quelques écrans simples plutôt que faire défiler tout le rapport :
 architecture, tableau de performance, bilan des tests, dashboard et limites.
 La consigne vidéo de l'enseignant remplace ici la forme « soutenance » du PDF.
 
-## Déroulé conseillé — exactement dix minutes
+## Déroulé de la vidéo — dix minutes
 
-| Temps | À montrer et expliquer |
+La [fiche de tournage](fiche-tournage-10-min.md) donne les dix-sept écrans et les commandes. Elle suit quatre chapitres dans l'ordre du projet :
+
+| Temps | À montrer |
 | --- | --- |
-| 00:00–00:40 | Problème : recevoir, conserver et analyser des mesures énergétiques |
-| 00:40–01:40 | Architecture : rôle des trois bases et séparation Storage/Analytics |
-| 01:40–02:50 | Conteneurs healthy, simulation et mesure acceptée puis consultable |
-| 02:50–05:30 | Performance : protocole, volumes, clients, débit 202, p95 et délai de stockage |
-| 05:30–07:00 | Panne/reprise : preuve PEL, données conservées, rejeu sans doublon |
-| 07:00–08:00 | Tests : 168 dans la version contrôlée, exemples de cas couverts |
-| 08:00–09:15 | Extension déjà faite : dashboard, anomalies, énergie et rapports |
-| 09:15–10:00 | Limites : agrégats coûteux, API locales, une réplique, suite envisagée |
+| 00:00–01:15 | Projet, conteneurs Docker, arborescence du code et contrat |
+| 01:15–03:30 | Bilan de simulation, création du capteur et tests 202/400 dans Swagger, puis Redis |
+| 03:30–05:30 | Clé Cassandra, résumé MongoDB, Swagger Analytics et dashboard |
+| 05:30–06:00 | Applications et bases dans Docker |
+| 06:00–08:15 | Volumes, clients, débit 202, p95, délai du résumé et lectures |
+| 08:15–09:00 | Panne Analytics, message en attente et reprise |
+| 09:00–09:30 | Bilan des tests préparés avant l'enregistrement |
+| 09:30–10:00 | Limites et prochaine extension envisagée |
 
-Les builds et les suites complètes sont préparés hors caméra. Pour une expérience
-longue, montrer un extrait puis le résultat complet daté ; annoncer qu'il a été
-obtenu avant l'enregistrement. Réserver du temps à l'interprétation des chiffres.
+Préparer les builds et les suites complètes hors caméra. Pour une expérience longue, montrer un extrait puis le bilan sauvegardé, en précisant qu'il a été obtenu avant la prise. Garder du temps pour expliquer les chiffres.
 
 ## Extensions et choix avant remise
 
@@ -246,7 +232,7 @@ Les rapports sont matérialisés au premier GET ; ce n'est pas un envoi automati
 programmé. La séparation Analytics est une mise en conformité architecturale,
 pas une IA.
 
-Pour une vidéo centrée sur la performance, finir les mesures et leurs explications
+Pour une vidéo centrée sur la performance, préparer le commentaire des mesures
 avant d'ajouter des technologies. Grafana/Prometheus peuvent rendre les métriques
 visibles pendant la charge, mais Actuator satisfait déjà le socle d'observabilité.
 La régression simple choisie comme prochaine extension reste à réaliser : données
@@ -258,5 +244,4 @@ compléter cette vidéo. Le PDF demande une valeur démontrable, pas un nombre m
 d'outils. Ne pas présenter une règle à seuil comme un modèle entraîné.
 
 Références du PDF : §4.1–4.2, §9.3, §10.2, §13.2, §19.2, §20.1–20.2,
-§22, §25–26 et §29. Les chiffres courants ci-dessus sont une lecture ponctuelle
-du 4 novembre ; ils évolueront après de nouvelles simulations ou tests.
+§22, §25–26 et §29. Les preuves brutes conservent leurs horodatages. Un nouvel essai ajoute des données sans effacer les anciennes.

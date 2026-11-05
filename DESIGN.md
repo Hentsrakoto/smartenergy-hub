@@ -25,9 +25,9 @@ components:
 # SmartEnergy Hub — interface de supervision
 
 ## Overview
-Un outil de cours pour consulter les mesures d'un bâtiment. La courbe temporelle
+Un outil de cours pour consulter les mesures simulées de plusieurs équipements. La courbe temporelle
 est le point central ; les alertes expliquent les dépassements sans suggérer une
-prévision. Une page Streamlit, en français, exécutée sur l'hôte.
+prévision. Une page Streamlit en français, exécutée dans Docker et reliée aux API Storage et Analytics. Le lancement sur l'hôte reste disponible pour le débogage.
 
 ## Colors
 Source canonique : `dashboard/theme.py` (modèle B). Ce document reflète ses

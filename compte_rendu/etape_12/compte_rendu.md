@@ -1,5 +1,7 @@
 # Étape 12 — Sécurité et gestion des accès
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-29. Étape 11 validée explicitement avant cette intervention. Skill rules appliqué ; note de sécurité du guide PDF §21 réalisée. Rapport conservé dans le dépôt du PC actuel.
 
 ## Objectif, inspection et périmètre

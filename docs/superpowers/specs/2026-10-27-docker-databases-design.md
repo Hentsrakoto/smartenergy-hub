@@ -1,5 +1,7 @@
 # Conception - Infrastructure Docker des bases SmartEnergy
 
+> Document de travail daté, conservé pour retrouver les décisions initiales. Les procédures à utiliser et les résultats actuels sont regroupés dans le [sommaire du projet](../../../doc/README.md). Les anciennes cases non cochées ne remplacent pas les validations de `docs/progress.md`.
+
 ## Intention
 
 Rendre le projet SmartEnergy Hub exécutable sur le nouveau PC de bureau en fournissant une infrastructure locale reproductible pour Redis, MongoDB et Cassandra 4.1, puis vérifier que les services Spring Boot existants peuvent l'utiliser sans perte de données.

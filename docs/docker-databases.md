@@ -80,6 +80,6 @@ Les données restent dans les volumes des bases. Ne pas exécuter down -v, docke
 
 ## Limites
 
-Images épinglées par version majeure/mineure ou distribution, avec digests de l'exécution conservables dans les preuves ; ce ne sont pas des tags latest. Les tags officiels peuvent recevoir des correctifs. Les comptes rendus indiquent les versions réellement testées.
+Les images utilisent des tags de version majeure/mineure ou de distribution. Un digest enregistré permet de retrouver précisément une image utilisée lors d'un essai ; les tags configurés ne sont pas des tags latest. Les tags officiels peuvent recevoir des correctifs. Les comptes rendus indiquent les versions réellement testées.
 
 Le réseau de développement et les bases n'ont pas d'authentification avancée. Les ports sont locaux ; voir [sécurité](security.md). Le test sur clone propre/autre machine reste une vérification distincte de cette migration sur les données existantes.

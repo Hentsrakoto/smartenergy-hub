@@ -12,7 +12,7 @@ L'initialiseur attend le healthcheck Cassandra, puis applique le CQL idempotent 
 
 ## Connectivité et simulateur
 
-Depuis l'hôte, les ports publiés sont accessibles sur 127.0.0.1. Entre conteneurs, il faut utiliser leurs noms de service et ports internes. Le simulateur joint désormais Collector par `http://collector-service:8080/api/measurements`. Les anciens essais vers `host.docker.internal` restent décrits ci-dessous avec leur date.
+Depuis l'hôte, les ports publiés sont accessibles sur 127.0.0.1. Entre conteneurs, il faut utiliser leurs noms de service et ports internes. Le simulateur joint désormais Collector par `http://collector-service:8080/api/measurements`. Les essais vers `host.docker.internal` décrits ci-dessous datent du mode hôte antérieur.
 
 L'image du simulateur utilise Python 3.12 et l'utilisateur non privilégié 10001. Le contexte de construction est limité aux fichiers nécessaires par `.dockerignore`. La simulation est une tâche finie, sans port publié ni redémarrage automatique ; un healthcheck permanent n'aurait pas le même sens que pour une base.
 
@@ -35,6 +35,6 @@ docker --context default compose ps
 
 La suite des commandes, y compris la première migration ciblée sur les bases existantes, la préparation, la simulation et les lectures, est regroupée dans le [scénario de cours](../../docs/course-demo.md). Pour arrêter uniquement les applications : `docker compose stop collector-service storage-service analytics-service dashboard`. Aucune remise à zéro des volumes n'est nécessaire.
 
-Le lancement a été vérifié sur le PC actuel après le changement de machine. Un essai indépendant depuis un clone propre ou sur un autre PC reste à faire. Le projet ne doit pas être présenté comme validé sur toute configuration Docker possible.
+Le contrôle Docker du 5 novembre confirme aussi la conservation des mesures, du résumé et du rapport après redémarrage des applications. Il conserve les mêmes conteneurs et volumes de bases ; il ne répète pas leur redémarrage du 29 octobre. Le lancement a été vérifié sur le PC actuel après le changement de machine. Un essai indépendant depuis un clone propre ou sur un autre PC reste à faire. Le projet ne doit pas être présenté comme validé sur toute configuration Docker possible.
 
 Sources : [Compose](../../docker-compose.yml), [Dockerfile du simulateur](../../simulator/Dockerfile), [guide d'exploitation](../../docs/docker-databases.md), [rapport et commandes exactes de persistance](../../compte_rendu/etape_10/compte_rendu.md), [preuves de reprise](../../compte_rendu/etape_8/reprise_nouveau_pc_bases.md).

@@ -41,6 +41,6 @@ docker exec smartenergy-cassandra cqlsh -e "SELECT count(*) FROM smartenergy.mea
 curl -fsS http://127.0.0.1:8083/api/measurements/perf-105a348a2b16-large/day/2026-10-31
 ```
 
-Pour créer un autre essai, utiliser `python3 scripts/measure_performance.py --output /tmp/smartenergy-performance.json`. Le script conserve les données et vérifie les comptes. Ce test local de 300 lignes ne permet pas de conclure sur plusieurs millions de mesures ou sur un cluster distribué.
+Les essais Docker du 5 novembre complètent ce premier relevé : 100 puis 1 000 mesures avec un client, puis un autre lot de 1 000 avec six clients. Pour la comparaison à un client, les moyennes de lecture REST sont 16.223 et 36.759 ms sur trente lectures par lot. Les commandes actuelles et tous les relevés figurent dans le [guide de performance](../../docs/performance.md). Ces volumes ne permettent pas de conclure sur plusieurs millions de mesures ou sur un cluster distribué.
 
 Sources : [script CQL complet](../../scripts/init-cassandra.cql), [entités](../../storage-service/src/main/java/com/smartenergy/storage/cassandra/entity), [service Cassandra](../../storage-service/src/main/java/com/smartenergy/storage/cassandra/service/CassandraMeasurementService.java), [reprise datée](../../compte_rendu/etape_5/reprise-2026-10-26.md), [mesures et données brutes](../../docs/performance.md).

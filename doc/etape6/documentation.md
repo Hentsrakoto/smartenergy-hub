@@ -1,9 +1,5 @@
 # Étape 6 — Conserver les documents métier dans MongoDB
 
-> Mise à jour du 4 novembre 2026 : les preuves initiales de ce chapitre gardent
-> leur date. L'exécution Docker et la séparation des calculs dans Analytics sont
-> présentées dans le [chapitre de migration](../migration-docker-analytics/documentation.md).
-
 [Sommaire](../README.md) · [Étape précédente](../etape5/documentation.md) · [Étape suivante](../etape7/documentation.md)
 
 ## Séparer les données selon leur usage
@@ -24,7 +20,7 @@ Un index unique sur `(sensorId, date)` complète l'identifiant stable du résum�
 
 Les routes minimales du guide sont présentes : POST et GET `/api/sensors`, GET et PUT `/api/sensors/{id}`, puis GET `/api/sensors/{id}/daily-summary`. La création retourne 201 ; un identifiant existant donne 409. Un capteur absent donne 404. Le PUT utilise l'identifiant du chemin comme référence et refuse un identifiant différent dans le corps.
 
-Le résumé est lu dans MongoDB s'il existe. Sinon, il est calculé depuis Cassandra puis enregistré. `refresh=true` force le recalcul. Pour un capteur enregistré, l'ingestion met également à jour ce résumé avant XACK. Une mesure d'un capteur non enregistré reste dans Cassandra sans produire automatiquement sa configuration MongoDB.
+Analytics lit le résumé dans MongoDB s'il existe. Sinon, il le calcule depuis Cassandra puis l'enregistre. Les routes de métadonnées restent dans Storage ; les routes de résumé et de rapport y sont conservées comme relais de compatibilité. `refresh=true` force le recalcul. Pour un capteur enregistré, l'ingestion met également à jour ce résumé avant XACK. Une mesure d'un capteur non enregistré reste dans Cassandra sans produire automatiquement sa configuration MongoDB.
 
 ## Vérifications et résultat
 
@@ -42,6 +38,6 @@ curl -fsS http://127.0.0.1:8083/api/sensors/sensor-002
 docker exec smartenergy-mongo mongosh smartenergy --quiet --eval 'db.sensors.findOne({_id:"sensor-002"})'
 ```
 
-Ces commandes créent seulement les métadonnées absentes. Pour obtenir un résumé, il faut ensuite envoyer des mesures ou recalculer celles déjà présentes. Le [scénario de cours](../../docs/course-demo.md) enchaîne ces opérations.
+Ces commandes créent seulement les métadonnées absentes. Pour obtenir un résumé, il faut ensuite envoyer des mesures ou recalculer celles déjà présentes. Le [scénario de cours](../../docs/course-demo.md) enchaîne ces opérations. Les modèles d'agrégats et de rapports sont désormais dans Analytics, qui est leur seul écrivain applicatif.
 
-Sources : [documents](../../storage-service/src/main/java/com/smartenergy/storage/mongo/document), [services MongoDB](../../storage-service/src/main/java/com/smartenergy/storage/mongo/service), [preuves initiales et mises à jour datées](../../compte_rendu/etape_6/compte_rendu.md), [preuve des rapports](../../compte_rendu/etape_6/complement_rapports_2026-10-29.md).
+Sources : [documents Storage](../../storage-service/src/main/java/com/smartenergy/storage/mongo/document), [résumés et rapports Analytics](../../analytics-service/src/main/java/com/smartenergy/analytics/mongo/service), [preuves initiales et mises à jour datées](../../compte_rendu/etape_6/compte_rendu.md), [preuve des rapports](../../compte_rendu/etape_6/complement_rapports_2026-10-29.md).

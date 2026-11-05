@@ -1,5 +1,7 @@
 # Étapes 6 et 8 — conception minimale
 
+> Document de travail daté, conservé pour retrouver les décisions initiales. Les procédures à utiliser et les résultats actuels sont regroupés dans le [sommaire du projet](../../../doc/README.md). Les anciennes cases non cochées ne remplacent pas les validations de `docs/progress.md`.
+
 ## Intention
 
 Terminer le stockage métier MongoDB et rendre l'API de consultation du MVP testable dans Swagger UI, sans annoncer une prévision IA inexistante. La validation finale appartient à l'étudiant.

@@ -1,5 +1,7 @@
 # Complément étape 6 — rapports MongoDB
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Le contexte applicable est désormais le nouveau PC : MongoDB, Redis et Cassandra 4.1 tournent sous Docker Compose ; les anciens comptes rendus décrivent l'ancienne machine.
 
 ## Modifications

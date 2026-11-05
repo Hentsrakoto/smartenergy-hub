@@ -1,5 +1,7 @@
 # Étape 9 — Analytics descriptif et détection par seuil
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-29. Travail individuel, conformément au skill rules et au guide PDF §17.1–17.2. Rapport placé dans le dépôt du PC actuel comme les compléments précédents.
 
 ## Objectif et décisions

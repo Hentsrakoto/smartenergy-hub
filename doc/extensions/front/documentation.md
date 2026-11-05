@@ -30,17 +30,17 @@ consignés dans `DESIGN.md` à la racine.
 
 ## Démarrage
 
-Depuis la racine du projet, avec Storage déjà démarré sur le port 8083 :
+Le démarrage normal passe par Compose, comme indiqué en tête de ce chapitre. Pour le débogage sur l'hôte, avec Storage sur 8083 et Analytics sur 8084, lancer depuis la racine :
 
 ```bash
 .venv/bin/python -m dashboard.run
 ```
 
 Ouvrir `http://127.0.0.1:8501`. Le serveur écoute uniquement sur la boucle locale.
-Pour utiliser un autre Storage :
+Les deux URL de service sont configurables :
 
 ```bash
-SMARTENERGY_STORAGE_URL=http://127.0.0.1:8083 .venv/bin/python -m dashboard.run
+SMARTENERGY_STORAGE_URL=http://127.0.0.1:8083 SMARTENERGY_ANALYTICS_URL=http://127.0.0.1:8084 .venv/bin/python -m dashboard.run
 ```
 
 L'environnement `.venv` est ignoré par Git. Sur une autre machine, l'installation
@@ -81,7 +81,7 @@ git diff --check
 
 Les tests d'interface utilisent des données fictives identifiées dans le test.
 Ils ne prouvent pas une prévision ML ni une performance sur les bases réelles.
-Le compte rendu daté distingue les contrôles exécutés des vérifications restantes.
+Le 4 novembre, 17 tests du dashboard ont réussi après l'ajout du routage vers les deux services. Le [compte rendu de migration](../../../compte_rendu/migration-docker-analytics/rapport.md) complète le compte rendu initial et distingue ces tests des lectures réelles en navigateur.
 
 ## Limites
 

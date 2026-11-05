@@ -102,6 +102,6 @@ endpoint de recalcul interne ; l'accès aux ports doit rester local. Les utilisa
 Docker sont non privilégiés, mais le réseau Docker n'établit pas à lui seul des
 permissions entre applications.
 
-`gateway-service/` documente un composant non implémenté. `monitoring/` explique
-Actuator ; aucun Grafana ou Prometheus n'est annoncé. `models/` ne contient pas
-de faux modèle : la régression ML restera une extension à entraîner et évaluer.
+Gateway, Grafana/Prometheus et la régression ML ne sont pas implémentés. Les répertoires facultatifs qui ne contenaient qu'un README ont été retirés de l'arborescence. Actuator reste intégré aux services Spring Boot.
+
+Les relevés ultérieurs du 5 novembre sont regroupés dans le [rapport de performance](../../docs/performance.md). Le [scénario de panne répété pour la vidéo](../../compte_rendu/presentation-video/verification-video.json) indique aussi onze contrôles réussis. Ces preuves complètent celles du 4 novembre et gardent leurs propres dates.

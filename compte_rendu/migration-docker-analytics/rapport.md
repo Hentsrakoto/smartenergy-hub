@@ -1,7 +1,8 @@
 # Migration Docker et Analytics — compte rendu
 
-Architecture demandée et validée le 1er novembre 2026. Contrôles finaux exécutés
-le **4 novembre 2026**, sur le PC actuel. Le projet reste individuel.
+> Ce compte rendu explique la séparation d'Analytics, l'exécution Docker et les vérifications réalisées. Le [sommaire du projet](../../doc/README.md) donne accès aux chapitres du cours.
+
+Le projet est individuel. Les contrôles décrits ici portent sur les applications conteneurisées et les bases existantes de la machine de développement.
 
 ## Résultat
 
@@ -10,7 +11,7 @@ applications sont healthy. Analytics possède les calculs descriptifs, les anoma
 les résumés quotidiens et les rapports. Storage conserve les mesures brutes et les
 capteurs, avec des relais HTTP pour ses anciennes routes analytiques.
 
-Le scénario réel complet a réussi entre **17:15:43 et 17:17:41, heure de Madagascar**.
+Le scénario réel complet a réussi sur cette installation.
 La preuve machine est [verification.json](verification.json). Les contrôles HTTP,
 utilisateurs et supervision sont dans [runtime-contracts.json](runtime-contracts.json).
 
@@ -36,13 +37,12 @@ utilisateurs et supervision sont dans [runtime-contracts.json](runtime-contracts
 | `scripts/init-cassandra.cql` | Nouveau nom conforme au guide, CQL idempotent inchangé |
 | `scripts/sample-data.json` | Exemple de mesure fictive valide |
 | `scripts/verify_docker_migration.py` | Scénario E2E conservant les données de preuve |
-| `gateway-service/README.md`, `monitoring/README.md`, `models/README.md` | État des composants facultatifs, sans faux service ou modèle |
+| Composants facultatifs | Gateway, Grafana/Prometheus et ML non implémentés ; aucun dossier vide de fonctionnalité conservé |
 | README, `docs/`, `doc/`, skill rules | Mode Docker courant, contrats, consignes et parcours d'évaluation |
 
-Les modifications de compléments et du front présentes avant cette migration ont
-été conservées. Le fichier utilisateur `.agent/skills/rules/essaie.md` n'a pas été
-modifié. Aucun commit, push, suppression de volume ou recréation de base n'a été
-effectué.
+Les modifications du front et les données déjà présentes ont été conservées
+pendant la séparation des services. Les contrôles de migration n'ont supprimé
+aucun volume et n'ont recréé aucune base.
 
 ## Configuration réellement utilisée
 
@@ -95,7 +95,7 @@ Résultat : `0 exited`. Le script effectue CREATE KEYSPACE/TABLE IF NOT EXISTS ;
 aucun DROP. Cassandra elle-même n'a pas été recréée ou redémarrée. La simulation
 `docker compose --dry-run up -d` ne prévoyait aucune recréation des trois bases.
 
-## Tests automatisés du 4 novembre
+## Tests automatisés de référence
 
 | Suite | Tests | Échecs / erreurs / ignorés |
 | --- | ---: | --- |
@@ -125,7 +125,7 @@ applicatifs ni masqués par des tests ignorés.
 python3 scripts/verify_docker_migration.py --output compte_rendu/migration-docker-analytics/verification.json
 ```
 
-Capteur de preuve final : **migration-c606ce16073f**, mesures du 3 novembre UTC.
+Capteur de preuve : **migration-c606ce16073f**, dans une même partition quotidienne UTC.
 Deux mesures distinctes : 4 kW puis 9 kW, espacées de 60 s, intervalle configuré
 10 s et seuil 5 kW. Résultat : 2 mesures, moyenne 6,5 kW, énergie 0,091667 kWh,
 une anomalie. Le rejeu de la seconde mesure garde ces comptes.
@@ -146,7 +146,7 @@ Les lectures Redis utilisées sont XPENDING, XLEN et XINFO GROUPS via redis-cli
 aucune requête manuelle de suppression ou modification des données n'a été envoyée.
 La seule exécution CQL de configuration est le script idempotent cité plus haut.
 
-Les données historiques de sensor-002 au 1er novembre restent présentes : 4 mesures,
+Les données du jeu historique de sensor-002 restent présentes : 4 mesures,
 2 anomalies, maximum 189,486 kW et énergie 0,272211 kWh. Les réponses d'anomalies
 directes et relayées sont identiques. Les plages inversées sont rejetées en 400.
 
@@ -161,7 +161,7 @@ suivi de contenu parasite. Le client utilise désormais un lecteur strict pour
 les succès et erreurs. Trois tests supplémentaires garantissent qu'un faux 404
 ou une réponse malformée ne permet pas l'acquittement.
 
-Le premier scénario réel du 4 novembre a révélé une différence de précision du
+Le premier scénario réel a révélé une différence de précision du
 champ generatedAt entre la première réponse et sa relecture MongoDB. La preuve
 [du premier essai](verification-first-attempt-2026-11-04.json) est conservée.
 La date créée est maintenant bornée à la précision milliseconde BSON, vérifiée par
@@ -174,18 +174,19 @@ Storage sont dépréciées. `/actuator/health` n'est pas exposé sur les ports p
 des API ; les trois santés internes sont UP, les métriques de persistance et de
 messages en attente sont lisibles depuis le réseau Docker.
 
-Le dashboard Docker a été consulté dans le navigateur, avec sensor-002 et les
-dates du 1er novembre. Les valeurs affichées correspondent aux API. Une capture
+Le dashboard Docker a été consulté dans le navigateur, avec sensor-002 sur la
+période du jeu historique. Les valeurs affichées correspondent aux API. Une capture
 est conservée dans [dashboard-docker.png](dashboard-docker.png).
 
 ## État et limites
 
 Migration techniquement vérifiée sur ce PC, prête pour relecture de l'étudiant.
-Les applications restent démarrées. Le démarrage depuis un clone propre sur une
+Le démarrage depuis un clone propre sur une
 autre machine reste à essayer indépendamment.
 
-Contrôle documentaire final : 30 documents et 219 liens locaux examinés, aucun
-lien cassé. `git diff --check` et `docker compose config -q` terminent en code 0.
+Les fichiers de preuve conservent les résultats de validation de Compose,
+des contrats HTTP et du scénario complet. La procédure de tournage les présente
+sans relancer une panne ou un benchmark pendant leur lecture.
 
 Une seule réplique Analytics est prévue. Les historiques restent non paginés,
 les calculs quotidiens relisent les mesures et les API restent locales sans JWT.

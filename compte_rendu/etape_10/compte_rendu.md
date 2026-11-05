@@ -1,5 +1,7 @@
 # Étape 10 — Conteneurisation et exécution
 
+> Journal daté : les commandes et résultats ci-dessous décrivent l'état du projet lors de cette intervention. Pour l'exécution Docker actuelle et les derniers relevés, consulter le [sommaire du projet](../../doc/README.md).
+
 Date : 2026-10-29. Contexte Docker `default`. Application individuelle ; règles du projet appliquées. Le Compose Cassandra actuel résulte de l'autorisation explicite donnée lors du changement de PC ; cette intervention réutilise ses conteneurs et volumes.
 
 ## Objectif et plan limité

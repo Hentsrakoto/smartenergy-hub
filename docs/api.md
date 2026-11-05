@@ -1,11 +1,11 @@
 # API SmartEnergy Hub
 
-## Répartition après migration Docker — 1er novembre 2026
+## Services et adresses de la version Docker
 
 | API | Propriétaire | URL locale |
 | --- | --- | --- |
 | POST /api/measurements | Collector | http://127.0.0.1:8081 |
-| CRUD /api/sensors et lectures /api/measurements/** | Storage | http://127.0.0.1:8083 |
+| Création, lecture et mise à jour /api/sensors ; lectures /api/measurements/** | Storage | http://127.0.0.1:8083 |
 | /api/analytics/**, daily-summary et daily-report | Analytics | http://127.0.0.1:8084 |
 
 Les anciennes routes analytiques de Storage sont conservées comme relais HTTP
@@ -30,15 +30,15 @@ Analytics. Voir le [chapitre de migration](../doc/migration-docker-analytics/doc
 
 Les applications Spring Boot tournent dans Docker et exposent chacune leur contrat OpenAPI via un port local publié. Après leur démarrage :
 
-En profil `local`, les opérations principales comportent des exemples de corps et de réponses. Storage utilise le nom d'exemple `cours` ; Collector documente aussi les erreurs `validation` et `indisponible`. Les valeurs sont fictives et ne constituent pas des résultats mesurés ni des capteurs automatiquement créés. La préparation des cinq capteurs réels du simulateur est décrite dans `docs/course-demo.md`.
+En profils `local` et `docker`, les opérations principales comportent des exemples de corps et de réponses. Storage utilise le nom d'exemple `cours` ; Collector documente aussi les erreurs `validation` et `indisponible`. Les valeurs sont fictives et ne constituent pas des résultats mesurés ni des capteurs automatiquement créés. La préparation des cinq capteurs réels du simulateur est décrite dans `docs/course-demo.md`.
 
 | Service | Swagger UI | Contrat JSON |
 | :--- | :--- | :--- |
-| Collector (port 8081) | `http://localhost:8081/swagger-ui.html` | `http://localhost:8081/v3/api-docs` |
-| Storage (port 8083) | `http://localhost:8083/swagger-ui.html` | `http://localhost:8083/v3/api-docs` |
+| Collector (port 8081) | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` |
+| Storage (port 8083) | `http://localhost:8083/swagger-ui/index.html` | `http://localhost:8083/v3/api-docs` |
 | Analytics (port 8084) | `http://localhost:8084/swagger-ui/index.html` | `http://localhost:8084/v3/api-docs` |
 
-`POST /api/measurements` relève du Collector : un `202 Accepted` signifie que Redis Streams a accepté l'événement, sans garantir sa persistance finale. Les lectures de mesures, capteurs et résumés relèvent du Storage Service. Les ports peuvent être remplacés via `COLLECTOR_SERVER_PORT` et `STORAGE_SERVER_PORT`.
+`POST /api/measurements` relève du Collector : un `202 Accepted` signifie que Redis Streams a accepté l'événement, sans garantir sa persistance finale. Storage expose les capteurs et les mesures ; Analytics expose les résumés, anomalies et rapports. Compose permet de modifier les ports publiés via `COLLECTOR_SERVER_PORT`, `STORAGE_SERVER_PORT` et `ANALYTICS_SERVER_PORT`.
 
 ## Capteurs et résumés — étape 6
 
@@ -73,7 +73,7 @@ curl -i -X PUT http://localhost:8083/api/sensors/SENSOR-001 \
 curl -i 'http://localhost:8083/api/sensors/SENSOR-001/daily-summary?date=2026-10-22'
 ```
 
-Le résumé est lu depuis `daily_summaries` s'il existe. Sinon, le service lit les mesures Cassandra pour ce jour UTC, calcule les indicateurs et enregistre le document MongoDB. `refresh=true` force ce recalcul. Sans `date`, la date UTC du jour est utilisée. Le Storage recalcule le résumé après chaque écriture d'une mesure d'un capteur enregistré, avant XACK.
+Le résumé est lu depuis `daily_summaries` s'il existe. Sinon, le service lit les mesures Cassandra pour ce jour UTC, calcule les indicateurs et enregistre le document MongoDB. `refresh=true` force ce recalcul. Sans `date`, la date UTC du jour est utilisée. Storage demande à Analytics de recalculer le résumé après chaque écriture d'une mesure d'un capteur enregistré, avant XACK.
 
 Le document de résumé contient `sensorId`, `date`, `avgPowerKw`, `maxPowerKw`, `energyKwh`, `anomalyCount`, `measurementCount`, `minPowerKw` et `updatedAt`. Son `_id` est `sensorId:YYYY-MM-DD`, ce qui permet la réécriture idempotente d'un même jour.
 
@@ -97,4 +97,4 @@ Le rapport est un instantané conservé dans `reports`, clé `sensorId:date`, st
 
 La route latest sans jour utilise les résumés MongoDB comme index des jours du capteur enregistré. Les mesures reçues avant son enregistrement, sans résumé, exigent `day` ou la génération préalable de leur résumé quotidien. L'historique reste disponible pour ces mesures. L'historique général est limité à 31 jours et n'est pas encore paginé ; utiliser des périodes courtes.
 
-Depuis l'étape 12, les diagnostics `/api/storage/**` sont désactivés par défaut. Le profil `demo` désactive également Swagger/OpenAPI et lie les API à 127.0.0.1. Voir `docs/security.md` pour les profils et les accès sensibles. Le profil `local`, actif par défaut, conserve Swagger.
+Depuis l'étape 12, les diagnostics `/api/storage/**` sont désactivés par défaut. Le profil `demo` désactive également Swagger/OpenAPI et lie les API à 127.0.0.1. Voir `docs/security.md` pour les profils et les accès sensibles. Le profil `local`, actif par défaut hors Compose, et le profil `docker` conservent Swagger.

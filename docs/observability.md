@@ -1,28 +1,52 @@
-# Observabilité locale — étape 11
+# Observer la santé et le traitement des mesures
 
-Actuator, version gérée par Spring Boot 3.3.4, est activé sur les deux applications. Spring Boot reste sur l'hôte. Seuls `health` et `metrics` sont exposés sur des ports distincts liés à `127.0.0.1` : Collector 9081 et Storage 9083. Variables : `COLLECTOR_MANAGEMENT_PORT` et `STORAGE_MANAGEMENT_PORT`, à exporter dans les terminaux Maven si modifiées (Compose ne les transmet pas aux applications hôte).
+Les trois services Spring Boot utilisent Actuator. Dans Docker, chacun expose `health` et `metrics` sur son port interne 9080. Ce port n'est pas publié sur l'hôte. La santé masque les détails internes ; les routes `env`, `configprops`, `heapdump` et `shutdown` ne sont pas exposées.
+
+## Lire les indicateurs dans Docker
+
+Depuis la racine du dépôt, sur les services déjà démarrés :
 
 ```bash
-curl -fsS http://127.0.0.1:9081/actuator/health
-curl -fsS http://127.0.0.1:9083/actuator/health
-curl -fsS http://127.0.0.1:9081/actuator/metrics
-curl -fsS 'http://127.0.0.1:9081/actuator/metrics/http.server.requests?tag=uri:/api/measurements&tag=status:202'
-curl -fsS 'http://127.0.0.1:9081/actuator/metrics/http.server.requests?tag=uri:/api/measurements&tag=status:400'
-curl -fsS 'http://127.0.0.1:9083/actuator/metrics/smartenergy.storage.persistence?tag=outcome:success'
-curl -fsS http://127.0.0.1:9083/actuator/metrics/smartenergy.storage.persistence.errors
-curl -fsS http://127.0.0.1:9083/actuator/metrics/smartenergy.redis.pending
+docker --context default compose exec -T collector-service java -cp /app/health ContainerHealthcheck http://127.0.0.1:9080/actuator/health
+docker --context default compose exec -T storage-service java -cp /app/health ContainerHealthcheck http://127.0.0.1:9080/actuator/health
+docker --context default compose exec -T analytics-service java -cp /app/health ContainerHealthcheck http://127.0.0.1:9080/actuator/health
 ```
 
-| Indicateur | Signification et limite |
+Pour lire les métriques de Storage, Python est disponible dans le dashboard :
+
+```bash
+docker --context default compose exec -T dashboard python -c 'import json; from urllib.request import urlopen; names=["smartenergy.storage.persistence?tag=outcome:success","smartenergy.storage.persistence.errors","smartenergy.redis.pending"]; [print(json.dumps(json.load(urlopen("http://storage-service:9080/actuator/metrics/"+name)),ensure_ascii=False)) for name in names]'
+```
+
+Les acceptations et rejets se consultent sur le port interne du Collector :
+
+```bash
+docker --context default compose exec -T dashboard python -c 'import json; from urllib.request import urlopen; base="http://collector-service:9080/actuator/metrics/http.server.requests?tag=uri:/api/measurements&tag=status:"; [print(json.dumps(json.load(urlopen(base+status)),ensure_ascii=False)) for status in ("202","400")]'
+```
+
+Une série HTTP n'apparaît qu'après une requête portant ces tags. Une réponse 404 à cette lecture peut donc signifier que la série n'a pas encore été créée.
+
+| Indicateur | Ce qu'il mesure |
 | --- | --- |
-| `health` | Santé agrégée des composants auto-configurés (Redis, et MongoDB/Cassandra pour Storage), sans détail interne. DOWN produit normalement 503. Ne prouve pas seul le traitement métier. |
-| `http.server.requests`, uri `/api/measurements`, status `202` | Nombre de réponses HTTP d'acceptation, distinct du nombre finalement stocké. |
-| Même métrique, status `400` | Rejets de validation et JSON invalide ; le compteur apparaît après la première réponse correspondante. |
-| Même métrique, `TOTAL_TIME / COUNT` | Temps moyen HTTP en secondes pour COUNT > 0, hors persistance asynchrone. |
-| `smartenergy.storage.persistence`, outcome `success` ou `error` | Timer des tentatives Cassandra + résumé MongoDB, COUNT et TOTAL_TIME (secondes). Inclut attente du verrou et rejeux, exclut XACK. |
-| `smartenergy.storage.persistence.errors` | Échecs de persistance propagés au consumer. Exclut parsing Redis et erreurs XACK ; capteur non enregistré = succès du stockage brut. |
-| `smartenergy.redis.pending` | PEL : messages déjà livrés et non acquittés, échantillonnage toutes les 10 s. NaN avant première lecture ou si indisponible. Ne mesure pas le lag des messages jamais livrés. |
+| `health` | Santé des composants auto-configurés. Un état UP ne suffit pas à prouver le parcours métier complet. |
+| `http.server.requests`, route `/api/measurements`, statut `202` | Réponses d'acceptation du Collector, avant stockage final |
+| Même instrument, statut `400` | Rejets de validation et JSON illisible |
+| Même instrument, `TOTAL_TIME / COUNT` | Temps moyen HTTP en secondes lorsque COUNT > 0, hors traitement asynchrone |
+| `smartenergy.storage.persistence`, outcome `success` ou `error` | Nombre et durée des tentatives : verrou Storage, écriture Cassandra et appel Analytics pour le résumé ; XACK est exclu |
+| `smartenergy.storage.persistence.errors` | Erreurs remontées par la persistance. Le parsing Redis et XACK sont hors de son périmètre ; un capteur inconnu autorise le stockage brut |
+| `smartenergy.redis.pending` | Messages livrés mais non acquittés, avec un échantillon toutes les 10 s ; NaN si aucune lecture fiable n'est disponible |
 
-Les compteurs sont en mémoire et repartent de zéro au redémarrage. Un rejeu peut compter à nouveau la même clé métier. Aucun sensorId ni contenu de mesure n'est ajouté comme tag ; outcome possède seulement deux valeurs. Actuator n'expose pas `env`, `configprops`, `heapdump` ou `shutdown`. L'index `/actuator` peut lister les endpoints autorisés. Loopback limite l'accès réseau, pas les autres utilisateurs locaux.
+Les compteurs repartent de zéro au redémarrage. Un rejeu peut compter plusieurs tentatives pour une seule mesure unique. Les tags ne contiennent ni identifiant de capteur ni contenu de mesure.
 
-`python3 scripts/verify_observability.py` vérifie santé UP sans détails, `env` absent, puis la progression des compteurs après trois mesures acceptées et une invalide. Les données de preuve sont conservées. Les tests unitaires couvrent succès/échec de persistance et PEL positive/vide/indisponible. Prometheus/Grafana restent des extensions.
+La jauge pending ne mesure pas le lag des messages encore jamais livrés. Pour vérifier directement les deux :
+
+```bash
+docker --context default compose exec -T smartenergy-redis redis-cli XPENDING energy-measurements storage-group
+docker --context default compose exec -T smartenergy-redis redis-cli XINFO GROUPS energy-measurements
+```
+
+## Mode hôte et preuves conservées
+
+Pour le débogage hors Docker, les ports par défaut restent 9081 pour Collector et 9083 pour Storage, liés à `127.0.0.1`. Le script `python3 scripts/verify_observability.py` vise ce mode ; il ne fonctionne pas tel quel avec les ports internes du Compose. Il crée des données de contrôle et ne doit pas être lancé pendant une mesure de charge.
+
+Les contrôles réels du 4 novembre sont dans le [rapport de migration](../compte_rendu/migration-docker-analytics/rapport.md). Les [résultats du 5 novembre](performance.md) ajoutent les mesures de charge dans Docker. Prometheus et Grafana restent des extensions non implémentées.
